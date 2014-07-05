@@ -131,6 +131,11 @@ def getIdentification():
         lastID = "/".join((getMac(),getInternalIP(),getExternalIP()))
     return lastID
 
+def ntpTimeWait():
+    """ wait for the new millenium (raspberry does not have hardware clock) """
+    while(datetime.date.today().year < 2000):
+        time.sleep(1)
+
 def formatdict(sourceDict, replacementDict):
     """ 
     formats all strings in a dict using the other values in the dict 

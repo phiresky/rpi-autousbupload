@@ -4,6 +4,7 @@ main loop starter for the ftpusbwatch program
 """
 try:
     import os,sys,util,usbwait,subprocess
+    util.ntpTimeWait()
 
     os.chdir(os.path.dirname(__file__)) # ensure correct working direcory
 
@@ -27,7 +28,7 @@ try:
         gitlog = subprocess.check_output("git pull",shell=True)
         subprocess.call("sync")
     except subprocess.CalledProcessError as e:
-        log.warn(str(e.returncode)+":"+e.output)
+        log.warn(str(e.returncode)+":"+e.output.decode('utf-8'))
         log.exception()
     gitlog = gitlog.decode('utf-8').strip()
     log.info("git|"+gitlog)
