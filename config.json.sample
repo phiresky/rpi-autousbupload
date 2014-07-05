@@ -1,0 +1,39 @@
+{
+	"devicename":"rpi-{ownername}",
+	"ownername":"Testpers",
+	"ftp":{
+		"server":"127.0.0.1",
+		"username":"ftpuser",
+		"password":"passwd",
+		"rootpath":"/Upload/{ownername}"
+	},
+	"smtp":{
+		"server":"smtp.gmail.com",
+		"port":465,
+		"username":"user@gmail.com",
+		"password":"foobar",
+		"from":{
+			"name":"Testpers",
+			"mail":"user@gmail.com"
+		},
+		"to":{
+			"name":"Testpers",
+			"mail":"recv@gmail.com"
+		}
+	},
+	"devicerootpath":"/",
+	"uploadlogcount":10,
+	"logapiurl":"http://localhost/sendlog.php",
+	"templates":{
+		"subject": "[{{device}}] {{subject}}",
+		"footer":"\n\nDiese automatisierte E-Mail wurde von Gerät {{device}} gesendet. ({{identification}})",
+		"beginUpload":{
+			"subject":"Hochladen hat begonnen.",
+			"body":"Hochladen begonnen. Es werden {{filecount}} Dateien ({{megabytes}}MB) hochgeladen.\nEs wird eine weitere E-Mail gesendet, sobald der Upload fertig ist."
+		},
+		"uploadComplete":{
+			"subject":"Hochladen abgeschlossen",
+			"body":"Hochladen abgeschlossen. Es wurden insgesamt {{filecount}} Dateien ({{megabytes}}MB) hochgeladen. Das ganze hat {{duration}} gedauert."
+		}
+	}
+}
