@@ -3,7 +3,9 @@
 main loop starter for the ftpusbwatch program
 """
 try:
-    import sys,util,usbwait,subprocess
+    import os,sys,util,usbwait,subprocess
+
+    os.chdir(os.path.dirname(__file__)) # ensure correct working direcory
 
     config=util.loadConfig("config.json")
     log=util.initLogger(config)
