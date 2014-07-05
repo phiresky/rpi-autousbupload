@@ -5,6 +5,11 @@ utility functions for usbftpwatch
 import json
 import datetime
 import urllib,urllib.request
+import time
+import os,os.path
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
 def getMountPoint(devid):
     """ find out the mount point given a device path """
     for mount in open('/proc/mounts'):
@@ -23,7 +28,6 @@ def getPartitions():
 
 def loadConfig(fname):
     """ load a json config file, use *.sample if it does not exist """
-    import os.path
     if not os.path.isfile(fname):
         import shutil
         shutil.copy(fname+".sample",fname)
@@ -37,14 +41,13 @@ def loadConfig(fname):
     return config
 
 def relpathjoin(a,b):
-    import os.path
     """ join(/mountpoint, /DCIM) returns /mountpoint/DCIM in contrast to os.path.join"""
     return os.path.join(a,b.lstrip("/"))
 
 
 def initLogger(config):
     """ create a file and mail logger """
-    import logging,os
+    import logging
     import logging.handlers
     loggername = config['devicename']
     logger = logging.getLogger(loggername)
@@ -83,7 +86,6 @@ def sanitize(string):
 
 def folderInfo(path):
     """ get total size and file count in a directory """
-    import os
     size = 0
     filecount = 0
     for root, _, files in os.walk(path):
@@ -111,7 +113,6 @@ def getExternalIP():
 
 def waitForNetwork():
     """ waits for an internet connection """
-    import urllib.request,time
     while True:
         try:
             urllib.request.urlopen("http://google.com")
@@ -149,9 +150,6 @@ def formatdict(sourceDict, replacementDict):
 
 def mail(config, message, subject="Automated Mail", contentType="text/plain"):
     """ send an automated email """
-    import smtplib
-    from email.mime.text import MIMEText
-    from email.header import Header
     smtpconfig = config['smtp']
     subject = config['templates']['subject'].format(subject=subject,device=config['devicename'])
     email = MIMEText(message + config['templates']['footer'].format(device=config['devicename'],identification=getIdentification()))
