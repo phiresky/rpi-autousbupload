@@ -31,7 +31,7 @@ def uploadDir(config, localroot, label):
     filecount = 0
     bytecount = 0
     statuslogcount=config['uploadlogcount']
-    statuslogstatus=0
+    statuslogstatus=-1
 
     def logFileProgress(info):
         nonlocal bytecount
