@@ -10,7 +10,7 @@ log=util.initLogger(config)
 try:
     log.info("boot|Waiting for network and updating")
     util.waitForNetwork()
-    gitlog = subprocess.check_output("GIT_SSH=./git_ssh.sh git pull",shell=True)
+    gitlog = subprocess.check_output("git pull",shell=True)
     gitlog = gitlog.decode('utf-8').strip()
     log.info("git|"+gitlog)
     if gitlog == "Already up-to-date.":
