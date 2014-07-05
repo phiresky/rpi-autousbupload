@@ -15,7 +15,7 @@ class USBWait:
         """
         handle a device plugin event
         """
-        if device.action != 'add':
+        if action != 'add':
             return
         devname = device['DEVNAME']
         if device['DEVTYPE'] == "disk":
@@ -65,7 +65,7 @@ class USBWait:
         monitor.filter_by('block')#,'partition')
 
         self.log.info("boot|Started USB wait loop")
-        for action,device in monitor:
+        for action, device in monitor:
             try:
                 self.handle_usb(action,device)
             except KeyboardInterrupt:
