@@ -204,7 +204,7 @@ class PHPUploadStream:
             try:
                 self.send(self.older+[self.buffer])
                 self.older=[]
-            except urllib.url.URLError as e:
+            except Exception as e:
                 print(e)
                 self.older += [ self.buffer ]
 
