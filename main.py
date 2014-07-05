@@ -2,11 +2,21 @@
 """
 main loop starter for the ftpusbwatch program
 """
+try:
+    import sys,util,usbwait,subprocess
 
-import sys,util,usbwait,subprocess
+    config=util.loadConfig("config.json")
+    log=util.initLogger(config)
+except KeyboardInterrupt:
+    raise
+except:
+    """ if all else fails, do a git pull -f, hoping that will fix it """
+    util.waitForNetwork()
+    gitlog = subprocess.check_output("git pull -f",shell=True)
+    print(gitlog.decode('utf-8'))
+    subprocess.Popen("./main.py",shell=True)
+    sys.exit(0)
 
-config=util.loadConfig("config.json")
-log=util.initLogger(config)
 try:
     log.info("boot|Waiting for network and updating")
     util.waitForNetwork()
@@ -18,7 +28,7 @@ try:
         usbwait.USBWait(config).main_loop(not ignoreAlreadyMounted)
     else:
         # rerun this and exit
-        subprocess.Popen("python main.py",shell=True)
+        subprocess.Popen("./main.py",shell=True)
 except KeyboardInterrupt:
     log.info("|Killed by Keyboard")
 except:
