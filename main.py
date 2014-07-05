@@ -12,9 +12,10 @@ try:
 except KeyboardInterrupt:
     raise
 except:
-    """ if all else fails, do a git pull -f, hoping that will fix it """
+    """ if all else fails, do a git pull, hoping that will fix it """
     util.waitForNetwork()
     gitlog = subprocess.check_output("git pull -f",shell=True)
+    subprocess.call("sync")
     print(gitlog.decode('utf-8'))
     subprocess.Popen("./main.py",shell=True)
     sys.exit(0)
@@ -24,6 +25,7 @@ try:
     util.waitForNetwork()
     try:
         gitlog = subprocess.check_output("git pull",shell=True)
+        subprocess.call("sync")
     except subprocess.CalledProcessError as e:
         log.warn(str(e.returncode)+":"+e.output)
         log.exception()
