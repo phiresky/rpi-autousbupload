@@ -69,6 +69,7 @@ def initLogger(config):
     console.setFormatter(formatter)
     maillog.setFormatter(formatter)
     phplog.setFormatter(formatter)
+    phplog.terminator="|END|\n";
 
     logger.setLevel(logging.DEBUG)
     filelog.setLevel(logging.DEBUG)

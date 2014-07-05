@@ -22,14 +22,14 @@ def uploadDir(config, localroot, label):
     log = logging.getLogger(config['devicename'])
 
     log.info("scanningFiles")
-    totalsize, totalcount = util.folderInfo(localroot)
+    totalbytes, totalcount = util.folderInfo(localroot)
     begintime = datetime.datetime.now()
-    log.info("beginUpload|{localroot}|{label}|{filecount}|{bytecount}.".format(
-        localroot=localroot,label=label,filecount=totalcount, bytecount=totalsize))
+    log.info("uploadBegin|{localroot}|{label}|{filecount}|{bytecount}.".format(
+        localroot=localroot,label=label,filecount=totalcount, bytecount=totalbytes))
     util.mail(config, 
-            config['templates']['beginUpload']['body'].format(
-                filecount=totalcount, megabytes=round(totalsize/1024/1024,1)),
-            subject=config['templates']['beginUpload']['subject'])
+            config['templates']['uploadBegin']['body'].format(
+                filecount=totalcount, megabytes=round(totalbytes/1024/1024,1)),
+            subject=config['templates']['uploadBegin']['subject'])
 
 
 
@@ -38,50 +38,61 @@ def uploadDir(config, localroot, label):
     host=ftputil.FTPHost(ftpconfig['server'],
                     ftpconfig['username'],
                     ftpconfig['password'])
-
-    host.makedirs(ftpconfig['rootpath'])
-    host.chdir(ftpconfig['rootpath'])
+    superrootpath=ftpconfig['rootpath']
+    host.makedirs(superrootpath)
+    host.chdir(superrootpath)
+    superrootpath = host.getcwd()
     begintime = datetime.datetime.now()
-    rootdirname = findDirname(host, begintime.strftime(
-        "%Y-%m-%d"))
-    host.makedirs(rootdirname)
-    host.chdir(rootdirname)
+    rootdirname = begintime.strftime("%Y-%m-%d")
+    host.makedirs(rootdirname + "-incomplete")
+    host.chdir(rootdirname + "-incomplete")
     remoteroot = host.getcwd()
     host.synchronize_times()
-    filecount = 0
-    bytecount = 0
+    uploadedfiles = 0
+    uploadedbytes = 0
     statuslogcount=config['uploadlogcount']
     statuslogstatus=-1
+    lastlogdate=begintime
+    def logProgress():
+        nonlocal uploadedfiles,totalcount,uploadedbytes,totalbytes
+        log.info("uploadProgress|{uploadedfiles}/{totalcount}|{uploadedbytes}/{totalbytes}".format(**vars()))
 
-    def logFileProgress(info):
-        nonlocal bytecount
-        bytecount += len(info)
-        #log.debug("Progress: "+str(len(info)))
+    def chunkCallback(info):
+        nonlocal uploadedbytes,statuslogcount,totalbytes,statuslogstatus,uploadedfiles,totalcount
+        uploadedbytes += len(info)
+        curstatus = uploadedbytes*statuslogcount//totalbytes
+        if curstatus != statuslogstatus:
+            statuslogstatus = curstatus
+            logProgress()
     for root, dirs, files in os.walk(localroot):
         relroot = os.path.relpath(root, localroot)
         #log.debug("walking "+relroot)
         host.chdir(os.path.join(remoteroot, relroot))
+        if (datetime.datetime.now()-lastlogdate).total_seconds() > 300:
+            # log every 5 minutes
+            lastlogdate=datetime.datetime.now()
+            logProgress()
+
         for dirname in dirs:
             host.mkdir(dirname)
         for fname in files:
             osfname=os.path.join(root,fname)
             if not os.path.isfile(osfname): continue
-            filecount += 1
+            uploadedfiles += 1
             log.debug("uploading " + os.path.join(relroot, fname))
             try:
                 host.upload_if_newer(osfname,
                            fname.encode('utf-8'),
-                           callback=logFileProgress)
-            except (ftputil.FTPOSError,OSError) as e:
+                           callback=chunkCallback)
+            except (ftputil.error.FTPOSError,OSError) as e:
                 log.warn("Error while uploading "+osfname+", continuing upload."+e)
-            if filecount*statuslogcount//totalcount != statuslogstatus:
-                statuslogstatus=filecount*statuslogcount//totalcount
-                log.info("uploadProgress|{}/{}|{}/{}".format(filecount,totalcount,bytecount,totalsize))
 
     endtime = datetime.datetime.now()
     totaltime = str(datetime.timedelta(seconds=int((endtime-begintime).total_seconds())))
+    host.chdir(superrootpath)
+    host.rename(remoteroot, findDirname(host, rootdirname))
     host.close()
-    log.info("uploadComplete|{filecount}|{bytecount}|{totaltime}".format(**vars()))
+    log.info("uploadComplete|{uploadedfiles}|{uploadedbytes}|{totaltime}".format(**vars()))
     util.mail(config,
-        config['templates']['uploadComplete']['body'].format(filecount=filecount,megabytes=round(bytecount/1024/1024,1),duration=totaltime),
+        config['templates']['uploadComplete']['body'].format(filecount=uploadedfiles,megabytes=round(uploadedbytes/1024/1024,1),duration=totaltime),
         subject=config['templates']['uploadComplete']['subject'])
