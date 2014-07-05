@@ -22,7 +22,11 @@ except:
 try:
     log.info("boot|Waiting for network and updating")
     util.waitForNetwork()
-    gitlog = subprocess.check_output("git pull",shell=True)
+    try:
+        gitlog = subprocess.check_output("git pull",shell=True)
+    except subprocess.CalledProcessError as e:
+        log.warn(e.returncode+":"+e.output)
+        log.exception()
     gitlog = gitlog.decode('utf-8').strip()
     log.info("git|"+gitlog)
     if gitlog == "Already up-to-date.":
