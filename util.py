@@ -160,7 +160,7 @@ def mail(config, message, subject="Automated Mail", contentType="text/plain"):
     session.login(smtpconfig['username'], smtpconfig['password'])
     session.sendmail(smtpconfig["from"]["mail"],
                      smtpconfig["to"]["mail"],
-                     email.as_string())
+                     email.as_string().encode("utf-8"))
     session.quit()
 
 
