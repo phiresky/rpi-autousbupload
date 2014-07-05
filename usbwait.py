@@ -64,9 +64,16 @@ class USBWait:
         monitor = pyudev.Monitor.from_netlink(context)
         monitor.filter_by('block')#,'partition')
 
-
-        observer = pyudev.MonitorObserver(monitor, self.handle_usb)
-        observer.start()
         self.log.info("boot|Started USB wait loop")
+        for action,device in monitor:
+            try:
+                self.handle_usb(action,device)
+            except KeyboardInterrupt:
+                raise
+            except:
+                self.log.exception("Exception while handling device")
+
+        """observer = pyudev.MonitorObserver(monitor, self.handle_usb)
+        observer.start()
         while True:
-            time.sleep(10000)
+            time.sleep(10000)"""

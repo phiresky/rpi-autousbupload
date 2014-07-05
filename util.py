@@ -27,7 +27,7 @@ def loadConfig(fname):
     if not os.path.isfile(fname):
         import shutil
         shutil.copy(fname+".sample",fname)
-    with open(fname) as jsonfile:
+    with open(fname,encoding='utf-8') as jsonfile:
         try:
             config = json.load(jsonfile)
         except:
