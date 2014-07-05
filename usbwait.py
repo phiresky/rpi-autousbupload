@@ -39,7 +39,7 @@ class USBWait:
             retries += 1
             mountpoint = util.getMountPoint(devname)
         if mountpoint == None:
-            self.log.error("Device {0}({1}) was not mounted"
+            self.log.info("Device {0}({1}) was not mounted"
                       .format(devlabel, devname))
             return
         campath = util.relpathjoin(mountpoint, self.config['devicerootpath'])

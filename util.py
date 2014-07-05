@@ -44,6 +44,9 @@ def relpathjoin(a,b):
     """ join(/mountpoint, /DCIM) returns /mountpoint/DCIM in contrast to os.path.join"""
     return os.path.join(a,b.lstrip("/"))
 
+def getVersion():
+    from subprocess import check_output as run
+    return int(run("git rev-list HEAD --count",shell=True).decode('utf-8'))
 
 def initLogger(config):
     """ create a file and mail logger """
@@ -159,7 +162,9 @@ def mail(config, message, subject="Automated Mail", contentType="text/plain"):
             smtpconfig["from"]["name"], smtpconfig["from"]["mail"]))
     email["Subject"]=Header(subject)
 
-    session = smtplib.SMTP_SSL(smtpconfig['server'], smtpconfig['port'])
+    if smtpconfig['usessl']:
+        session = smtplib.SMTP_SSL(smtpconfig['server'], smtpconfig['port'])
+    else: session = smtplib.SMTP(smtpconfig['server'], smtpconfig['port'])
     session.login(smtpconfig['username'], smtpconfig['password'])
     session.sendmail(smtpconfig["from"]["mail"],
                      smtpconfig["to"]["mail"],
