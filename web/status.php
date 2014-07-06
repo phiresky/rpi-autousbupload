@@ -8,6 +8,7 @@
 <style>
 body{padding-top:120px;} .marg{margin:1em;}
 h3.smallmarg {margin:6px}
+.inline {display:inline-block;}
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 </style>
 <body ng-controller="RaspberryController">
@@ -16,11 +17,17 @@ h3.smallmarg {margin:6px}
 </div>
 <div class="container">
     <accordion>
-        <accordion-group ng-repeat="rasp in raspberries" is-open="true">
-			<accordion-heading><h3 class="smallmarg">{{rasp.name}}</h3></accordion-heading>
-			<span>Last seen: {{rasp.lastUpdate|from:moment()}}
-			<span ng-if="rasp.identification">| Identification: {{rasp.identification}}</span>
-			| Version: {{rasp.version}}</span>
+		<accordion-group ng-repeat="rasp in raspberries" is-open="rasp.visible">
+			<accordion-heading><div class=row>
+				<h3 class="col-xs-6 smallmarg inline">{{rasp.name}}</h3>
+				<div class="col-xs-6 col-md-4" ng-if="!rasp.visible" class="inline">
+					Latest Upload: {{rasp.uploads[0].begin|from:moment()}}
+<progressbar style='margin-bottom:0px;' max="rasp.uploads[0].bytes.total" type="{{rasp.uploads[0].error?'danger':''}}" class="{{(!rasp.uploads[0].complete?'active':'')+' progress-striped'}}" value="rasp.uploads[0].error?rasp.uploads[0].bytes.total:rasp.uploads[0].bytes.current">{{rasp.uploads[0].error?'ERROR':(rasp.uploads[0].bytes|xofy:'bytes')}}</progressbar>
+
+				</div></div>
+			</accordion-heading>
+			<rpi-status></rpi-status>
+			
             <div class="well row marg" ng-repeat="upload in rasp.uploads">
                 <div class="col-xs-6 col-md-4">
                     <p>Upload {{rasp.uploads.length-$index}} / {{rasp.uploads.length}}:</p>
@@ -34,13 +41,18 @@ h3.smallmarg {margin:6px}
                     <div ng-if="!upload.complete&&!upload.error" class="alert alert-info">
                         Upload in progress
                     </div>
-                    <alert ng-if="upload.complete" type="'success'">Upload complete!</alert>
+                    <alert ng-if="upload.complete&&!upload.error" type="'success'">Upload complete!</alert>
                     <alert ng-if="upload.error" type="'danger'">Upload error: <pre>{{upload.error}}</pre></alert>
                 </div>
             </div>
 		</accordion-group>
     </accordion>
     <div ng-hide="logPointer" class="alert alert-info">No raspberries were found</div>
+<script type="text/ng-template" id="rpi-status.html">
+<span>Last seen: {{rasp.lastUpdate|from:moment()}}
+<span ng-if="rasp.identification">| Identification: {{rasp.identification}}</span>
+| Version: {{rasp.version}}</span>
+</script>
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
@@ -77,6 +89,7 @@ Raspberry.prototype.logAdd = function(line) {
 	this.log.push(line);
 	if(line[LL.TYPE]==="ERROR") {
 		if(this.uploads[0]) this.uploads[0].error = line.join("|");
+		this.uploads[0].complete = parseAscDate(line[LL.TIME]);
 		this.error = line.join("|");
 	}
 	switch(line[LL.WHAT]) {
@@ -127,6 +140,10 @@ app.filter('bytes', function() {
 		return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) +  ' ' + units[number];
 	}
 });
+
+app.directive("rpiStatus",function() {
+	return {restrict:'E', templateUrl:"rpi-status.html"}
+});
 String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
@@ -140,6 +157,7 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 			var lines = resp.split("\n");
 			lines.pop();
 			if(lines.length == 0) return;
+			var outLines=[];
 			var line = [];
 			var multiline = false;
 			for(var l=0;l<lines.length;l++) {
@@ -156,15 +174,15 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 				//if(line.length<3) continue;
 				if(!$scope.raspberries[line[LL.NAME]]) $scope.raspberries[line[LL.NAME]] = new Raspberry(line[LL.NAME]);
 				$scope.raspberries[line[LL.NAME]].logAdd(line);
+				outLines.push(line);
 			}
-			_a=lines;
-			$scope.lastUpdate=parseAscDate(lines[lines.length-1][LL.TIME]);
+			$scope.lastUpdate=parseAscDate(outLines[outLines.length-1][LL.TIME]);
 			$scope.logPointer += lines.length; 
 		});
 	};
 	updateGet();
 	$interval(updateGet,10*1000);
-	_a=$scope;
+	window.dbg=$scope;
 });
 
 </script>
