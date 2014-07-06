@@ -24,7 +24,7 @@ def uploadDir(config, localroot, label):
     log.info("scanningFiles")
     totalbytes, totalcount = util.folderInfo(localroot)
     begintime = datetime.datetime.now()
-    log.info("uploadBegin|{localroot}|{label}|{filecount}|{bytecount}.".format(
+    log.info("uploadBegin|{localroot}|{label}|{filecount}|{bytecount}".format(
         localroot=localroot,label=label,filecount=totalcount, bytecount=totalbytes))
     util.mail(config, 
             config['templates']['uploadBegin']['body'].format(
@@ -74,16 +74,18 @@ def uploadDir(config, localroot, label):
             logProgress()
 
         for dirname in dirs:
-            host.mkdir(dirname)
+            host.makedirs(dirname)
         for fname in files:
             osfname=os.path.join(root,fname)
             if not os.path.isfile(osfname): continue
             uploadedfiles += 1
             log.debug("uploading " + os.path.join(relroot, fname))
             try:
-                host.upload_if_newer(osfname,
+                uploaded = host.upload_if_newer(osfname,
                            fname.encode('utf-8'),
                            callback=chunkCallback)
+                if not uploaded:
+                    log.info("tmp|skipped file "+osfname)
             except (ftputil.error.FTPOSError,OSError) as e:
                 log.warn("Error while uploading "+osfname+", continuing upload."+e)
 

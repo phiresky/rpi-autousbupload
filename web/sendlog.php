@@ -6,8 +6,8 @@ if(!isset($_POST['logdata'])) die('e: no data');
 
 try {
 	if(!is_dir("uploadlogs")) mkdir("uploadlogs");
-    $data = json_encode($_POST['logdata'])."\n";
-    file_put_contents('uploadlogs/'.date('Y-m-d').'.txt',$data,FILE_APPEND);
+    $data = $_POST['logdata'];
+    file_put_contents('uploadlogs/'.date('Y-m').'.txt',$data,FILE_APPEND);
     exit('s'); // success
 } catch (Exception $e) {
     die('e: '.$e->getMessage()); // error

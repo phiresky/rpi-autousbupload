@@ -29,6 +29,7 @@ except Exception as e:
 try:
     log.info("boot|Waiting for network and updating")
     util.waitForNetwork()
+    log.info("identification|"+util.getIdentification())
     try:
         gitlog = subprocess.check_output("git pull",shell=True)
         subprocess.call("sync")

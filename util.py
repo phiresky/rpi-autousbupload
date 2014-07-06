@@ -133,7 +133,7 @@ def getIdentification():
     if (now-lastIDgetTime).total_seconds()>60*60:
         # cache for one hour
         lastIDgetTime=now
-        lastID = "/".join((getMac(),getInternalIP(),getExternalIP()))
+        lastID = "|".join((getMac(),getInternalIP(),getExternalIP()))
     return lastID
 
 def ntpTimeWait():
