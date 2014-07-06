@@ -5,6 +5,7 @@ import logging
 import os
 import util
 import datetime
+import traceback
 
 import ftputil
 
@@ -40,7 +41,7 @@ def uploadDir(config, localroot, label):
                     ftpconfig['username'],
                     ftpconfig['password'])
     except ftputil.error.FTPOSError:
-        log.exception("Could not connect to FTP Server|")
+        log.exception("Could not connect to FTP Server|"+traceback.format_exc())
         return
     superrootpath=ftpconfig['rootpath']
     host.makedirs(superrootpath)
@@ -92,9 +93,9 @@ def uploadDir(config, localroot, label):
                     log.debug("tmp|skipped file "+osfname)
                     uploadedbytes+=os.path.getsize(osfname)
             except (ftputil.error.FTPOSError,OSError) as e:
-                log.warn("Error while uploading "+osfname+"|"+e)
+                log.warn("Error while uploading "+osfname+"|"+traceback.format_exc())
             except IOError as e:
-                log.warn("Could not read file "+osfname+"|"+e)
+                log.warn("Could not read file "+osfname+"|"+traceback.format_exc())
 
     endtime = datetime.datetime.now()
     totaltime = str(datetime.timedelta(seconds=int((endtime-begintime).total_seconds())))

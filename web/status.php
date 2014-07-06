@@ -10,6 +10,7 @@ body{padding-top:120px;} .marg{margin:1em;}
 @media (max-width:768px) { body {padding-top:150px;}}
 h3.smallmarg {margin:6px}
 .inline {display:inline-block;}
+.progress-bar>span{white-space:nowrap;color:black;}
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 </style>
 <body ng-controller="RaspberryController">
@@ -23,7 +24,14 @@ h3.smallmarg {margin:6px}
 				<h3 class="col-md-4 smallmarg inline">{{rasp.name}}</h3>
 				<div class="col-md-4" ng-if="!rasp.visible" class="inline">
 					Latest Upload: {{rasp.uploads[0].begin|from:moment()}}
-<progressbar style='margin-bottom:0px;' max="rasp.uploads[0].bytes.total" type="{{rasp.uploads[0].error?'danger':''}}" class="{{(!rasp.uploads[0].complete?'active':'')+' progress-striped'}}" value="rasp.uploads[0].error?rasp.uploads[0].bytes.total:rasp.uploads[0].bytes.current">{{rasp.uploads[0].error?'ERROR':(rasp.uploads[0].bytes|xofy:'bytes')}}</progressbar>
+					<progressbar 
+						style='margin-bottom:0px;'
+						max="rasp.uploads[0].bytes.total"
+						type="{{rasp.uploads[0].error?'danger':'success'}}"
+						class="{{(!rasp.uploads[0].complete?'active':'')+' progress-striped'}}"
+						value="rasp.uploads[0].error?rasp.uploads[0].bytes.total:rasp.uploads[0].bytes.current">
+						{{rasp.uploads[0].error?'ERROR':(rasp.uploads[0].bytes|xofy:'bytes')}}
+					</progressbar>
 
 				</div></div>
 			</accordion-heading>
@@ -38,7 +46,13 @@ h3.smallmarg {margin:6px}
                     <p>Label: {{upload.label}}</p>
                 </div>
                 <div class="col-xs-12 col-md-8">
-                    <progressbar ng-if="!upload.error" max="upload.bytes.total" class="{{(!upload.complete?'active':'')+' progress-striped'}}" value="upload.bytes.current">{{upload.bytes|xofy:'bytes'}}</progressbar>
+					<progressbar ng-if="!upload.error"
+						max="upload.bytes.total"
+						type="success"
+						class="{{(!upload.complete?'active':'')+' progress-striped'}}"
+						value="upload.bytes.current">
+						{{upload.bytes|xofy:'bytes'}}
+					</progressbar>
                     <div ng-if="!upload.complete&&!upload.error" class="alert alert-info">
                         Upload in progress
                     </div>

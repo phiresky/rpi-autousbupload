@@ -15,7 +15,8 @@ except KeyboardInterrupt:
     raise
 except Exception as e:
     """ if all else fails, do a git pull, hoping that will fix it """
-    print(e)
+    import traceback
+    traceback.print_exc()
     util.waitForNetwork()
     gitlog = subprocess.check_output("git pull -f",shell=True).decode('utf-8').strip()
     subprocess.call("sync")
