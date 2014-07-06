@@ -43,7 +43,7 @@ h3.smallmarg {margin:6px}
                         Upload in progress
                     </div>
                     <alert ng-if="upload.complete&&!upload.error" type="'success'">Upload complete!</alert>
-                    <alert ng-if="upload.error" type="'danger'">Upload error: <pre>{{upload.error}}</pre></alert>
+                    <alert ng-if="upload.error" type="'danger'">Upload error: {{upload.error[3]}} <button class="btn btn-sm btn-default" ng-click="showTrace=!showTrace">Show Stacktrace</button><pre collapse="!showTrace">{{upload.error.slice(3).join("\n")}}</pre></alert>
                 </div>
             </div>
 		</accordion-group>
@@ -89,9 +89,9 @@ Raspberry.prototype.getStatus = function() {
 Raspberry.prototype.logAdd = function(line) {
 	this.log.push(line);
 	if(line[LL.TYPE]==="ERROR") {
-		if(this.uploads[0]) this.uploads[0].error = line.join("|");
+		if(this.uploads[0]) this.uploads[0].error = line;
 		this.uploads[0].complete = parseAscDate(line[LL.TIME]);
-		this.error = line.join("|");
+		this.error = line;
 	}
 	switch(line[LL.WHAT]) {
 	case "uploadBegin": 

@@ -39,7 +39,7 @@ def uploadDir(config, localroot, label):
         host=ftputil.FTPHost(ftpconfig['server'],
                     ftpconfig['username'],
                     ftpconfig['password'])
-    except FTPOSError:
+    except ftputil.error.FTPOSError:
         log.exception("Could not connect to FTP Server|")
         return
     superrootpath=ftpconfig['rootpath']
@@ -92,7 +92,9 @@ def uploadDir(config, localroot, label):
                     log.debug("tmp|skipped file "+osfname)
                     uploadedbytes+=os.path.getsize(osfname)
             except (ftputil.error.FTPOSError,OSError) as e:
-                log.warn("Error while uploading "+osfname+", continuing upload."+e)
+                log.warn("Error while uploading "+osfname+"|"+e)
+            except IOError:
+                log.warn("Could not read file "+osfname+"|"+e)
 
     endtime = datetime.datetime.now()
     totaltime = str(datetime.timedelta(seconds=int((endtime-begintime).total_seconds())))
