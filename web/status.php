@@ -5,20 +5,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel=stylesheet href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-<style>body{padding-top:90px;} .marg{margin:1em;}
+<style>
+body{padding-top:120px;} .marg{margin:1em;}
+h3.smallmarg {margin:6px}
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 </style>
+<body ng-controller="RaspberryController">
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-<div class="container"><h2>Raspberry upload status</h2></div>
+<div class="container"><h2>Raspberry upload status </h2><p>Last update: {{lastUpdate|from:moment()}}</p></div>
 </div>
-<div class="container" ng-controller="RaspberryController as ctrl">
+<div class="container">
     <accordion>
-        <accordion-group ng-repeat="rasp in raspberries" heading="{{rasp.name}}" is-open="true">
+        <accordion-group ng-repeat="rasp in raspberries" is-open="true">
+			<accordion-heading><h3 class="smallmarg">{{rasp.name}}</h3></accordion-heading>
+			<span>Last seen: {{rasp.lastUpdate|from:moment()}}
+			<span ng-if="rasp.identification">| Identification: {{rasp.identification}}</span>
+			| Version: {{rasp.version}}</span>
             <div class="well row marg" ng-repeat="upload in rasp.uploads">
                 <div class="col-xs-6 col-md-4">
                     <p>Upload {{rasp.uploads.length-$index}} / {{rasp.uploads.length}}:</p>
                     <p>Begun: {{upload.begin|date:"medium"}}</p>
-                    <p ng-if="upload.complete">Completed: {{upload.complete|date:"medium"}}</p>
+                    <p ng-if="upload.complete">Completed: {{upload.complete|date:"medium"}} ({{upload.complete|from:upload.begin}})</p>
                     <p>Files: {{upload.files|xofy}}</p>
                     <p>Label: {{upload.label}}</p>
                 </div>
@@ -51,7 +58,8 @@ var LL = {
 	'INFO':4
 }
 function parseAscDate(inp) {
-	var argArr = [null].concat("2014-07-05 23:01:10,454".split(/[^0-9]/))
+	var argArr = [null].concat(inp.split(/[^0-9]/));
+	argArr[2]--;
 	var constructor = Date.bind.apply(Date, argArr);
 	return new constructor();	
 }
@@ -59,6 +67,7 @@ function Raspberry(name) {
 	this.log = [];
 	this.name = name;
 	this.uploads = [];
+	this.lastUpdate = 0;
 }
 
 Raspberry.prototype.getStatus = function() {
@@ -69,7 +78,6 @@ Raspberry.prototype.logAdd = function(line) {
 	if(line[LL.TYPE]==="ERROR") {
 		if(this.uploads[0]) this.uploads[0].error = line.join("|");
 		this.error = line.join("|");
-
 	}
 	switch(line[LL.WHAT]) {
 	case "uploadBegin": 
@@ -90,12 +98,22 @@ Raspberry.prototype.logAdd = function(line) {
 		this.uploads[0].complete = parseAscDate(line[LL.TIME]);
 		this.uploads[0].bytes.current=line[LL.INFO+1];
 	break;
+	case "identification":
+		this.identification = line.slice(LL.INFO,LL.INFO+3);
+	break;
+	case "git":this.version = line[LL.INFO];break;
 	}
+	this.lastUpdate = parseAscDate(line[LL.TIME]);
 }
 app.filter('xofy', function($filter) {
 	return function(obj,filter) {
 		if(filter===undefined) return obj.current + " / " + obj.total;
 		return $filter(filter)(obj.current) + " / " + $filter(filter)(obj.total);
+	}
+});
+app.filter('from', function() {
+	return function(date,date2) {
+		return moment(date).from(date2);
 	}
 });
 
@@ -119,9 +137,9 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 	$scope.lastUpdate=null;
 	function updateGet() {
 		$http.get("getlog.php?begin="+encodeURIComponent($scope.logPointer)).success(function(resp) {
-			$scope.lastUpdate=new Date();
 			var lines = resp.split("\n");
 			lines.pop();
+			if(lines.length == 0) return;
 			var line = [];
 			var multiline = false;
 			for(var l=0;l<lines.length;l++) {
@@ -139,6 +157,8 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 				if(!$scope.raspberries[line[LL.NAME]]) $scope.raspberries[line[LL.NAME]] = new Raspberry(line[LL.NAME]);
 				$scope.raspberries[line[LL.NAME]].logAdd(line);
 			}
+			_a=lines;
+			$scope.lastUpdate=parseAscDate(lines[lines.length-1][LL.TIME]);
 			$scope.logPointer += lines.length; 
 		});
 	};

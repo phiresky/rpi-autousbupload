@@ -86,6 +86,7 @@ def uploadDir(config, localroot, label):
                            callback=chunkCallback)
                 if not uploaded:
                     log.info("tmp|skipped file "+osfname)
+                    uploadedbytes+=os.path.getsize(osfname")
             except (ftputil.error.FTPOSError,OSError) as e:
                 log.warn("Error while uploading "+osfname+", continuing upload."+e)
 
