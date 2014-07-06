@@ -93,7 +93,7 @@ def uploadDir(config, localroot, label):
                     uploadedbytes+=os.path.getsize(osfname)
             except (ftputil.error.FTPOSError,OSError) as e:
                 log.warn("Error while uploading "+osfname+"|"+e)
-            except IOError:
+            except IOError as e:
                 log.warn("Could not read file "+osfname+"|"+e)
 
     endtime = datetime.datetime.now()
