@@ -7,6 +7,7 @@
 <link rel=stylesheet href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <style>
 body{padding-top:120px;} .marg{margin:1em;}
+@media (max-width:768px) { body {padding-top:150px;}}
 h3.smallmarg {margin:6px}
 .inline {display:inline-block;}
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
@@ -19,8 +20,8 @@ h3.smallmarg {margin:6px}
     <accordion>
 		<accordion-group ng-repeat="rasp in raspberries" is-open="rasp.visible">
 			<accordion-heading><div class=row>
-				<h3 class="col-xs-6 smallmarg inline">{{rasp.name}}</h3>
-				<div class="col-xs-6 col-md-4" ng-if="!rasp.visible" class="inline">
+				<h3 class="col-md-4 smallmarg inline">{{rasp.name}}</h3>
+				<div class="col-md-4" ng-if="!rasp.visible" class="inline">
 					Latest Upload: {{rasp.uploads[0].begin|from:moment()}}
 <progressbar style='margin-bottom:0px;' max="rasp.uploads[0].bytes.total" type="{{rasp.uploads[0].error?'danger':''}}" class="{{(!rasp.uploads[0].complete?'active':'')+' progress-striped'}}" value="rasp.uploads[0].error?rasp.uploads[0].bytes.total:rasp.uploads[0].bytes.current">{{rasp.uploads[0].error?'ERROR':(rasp.uploads[0].bytes|xofy:'bytes')}}</progressbar>
 
@@ -29,14 +30,14 @@ h3.smallmarg {margin:6px}
 			<rpi-status></rpi-status>
 			
             <div class="well row marg" ng-repeat="upload in rasp.uploads">
-                <div class="col-xs-6 col-md-4">
+                <div class="col-xs-12 col-md-4">
                     <p>Upload {{rasp.uploads.length-$index}} / {{rasp.uploads.length}}:</p>
                     <p>Begun: {{upload.begin|date:"medium"}}</p>
-                    <p ng-if="upload.complete">Completed: {{upload.complete|date:"medium"}} ({{upload.complete|from:upload.begin}})</p>
+                    <p ng-if="upload.complete">{{upload.error?'Aborted':'Completed'}}: {{upload.complete|date:"medium"}} ({{upload.complete|from:upload.begin}})</p>
                     <p>Files: {{upload.files|xofy}}</p>
                     <p>Label: {{upload.label}}</p>
                 </div>
-                <div class="col-xs-6 col-md-8">
+                <div class="col-xs-12 col-md-8">
                     <progressbar ng-if="!upload.error" max="upload.bytes.total" class="{{(!upload.complete?'active':'')+' progress-striped'}}" value="upload.bytes.current">{{upload.bytes|xofy:'bytes'}}</progressbar>
                     <div ng-if="!upload.complete&&!upload.error" class="alert alert-info">
                         Upload in progress
