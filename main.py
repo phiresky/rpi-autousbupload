@@ -47,4 +47,4 @@ try:
 except KeyboardInterrupt:
     log.info("|Killed by Keyboard")
 except:
-    log.exception("Error in main loop")
+    log.exception("Error in main loop|")

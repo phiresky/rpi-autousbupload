@@ -35,9 +35,13 @@ def uploadDir(config, localroot, label):
 
     ftpconfig = config['ftp']
     log.debug("Connecting to " + ftpconfig['server'])
-    host=ftputil.FTPHost(ftpconfig['server'],
+    try:
+        host=ftputil.FTPHost(ftpconfig['server'],
                     ftpconfig['username'],
                     ftpconfig['password'])
+    except FTPOSError:
+        log.exception("Could not connect to FTP Server|")
+        return
     superrootpath=ftpconfig['rootpath']
     host.makedirs(superrootpath)
     host.chdir(superrootpath)
@@ -85,7 +89,7 @@ def uploadDir(config, localroot, label):
                            fname.encode('utf-8'),
                            callback=chunkCallback)
                 if not uploaded:
-                    log.info("tmp|skipped file "+osfname)
+                    log.debug("tmp|skipped file "+osfname)
                     uploadedbytes+=os.path.getsize(osfname)
             except (ftputil.error.FTPOSError,OSError) as e:
                 log.warn("Error while uploading "+osfname+", continuing upload."+e)

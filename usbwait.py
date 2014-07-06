@@ -50,7 +50,7 @@ class USBWait:
         try:
             ftpuploader.uploadDir(self.config, campath, devlabel)
         except:
-            self.log.exception('Error in ftp uploader')
+            self.log.exception('Error in ftp uploader|')
 
     def handle_first(self):
         """ scan for devices added before starting the udev monitor """
@@ -71,7 +71,7 @@ class USBWait:
             except KeyboardInterrupt:
                 raise
             except:
-                self.log.exception("Exception while handling device")
+                self.log.exception("Exception while handling device|")
 
         """observer = pyudev.MonitorObserver(monitor, self.handle_usb)
         observer.start()
