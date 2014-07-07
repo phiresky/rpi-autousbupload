@@ -35,8 +35,8 @@ try:
         gitlog = subprocess.check_output("git pull",shell=True)
         subprocess.call("sync")
     except subprocess.CalledProcessError as e:
-        log.warn(str(e.returncode)+":"+e.output.decode('utf-8'))
-        log.exception()
+        log.warn("Update-Fehler|"+str(e.returncode)+":"+e.output.decode('utf-8'))
+        log.exception("Git sync error")
     gitlog = gitlog.decode('utf-8').strip()
     log.info("git|"+str(util.getVersion())+'|'+gitlog)
     if gitlog == "Already up-to-date.":
