@@ -71,7 +71,7 @@ h3.smallmarg {margin:6px}
     <div ng-hide="logPointer" class="alert alert-info">No raspberries were found</div>
 <script type="text/ng-template" id="rpi-status.html">
 <span>Zuletzt gesehen: {{rasp.lastUpdate|from:moment()}}
-<span ng-if="rasp.identification">| Identification: {{rasp.identification}}</span>
+<span ng-if="rasp.identification">| Identification: {{rasp.identification[1]}}</span>
 | Version: {{rasp.version}}</span>
 </script>
 </div>
@@ -107,6 +107,7 @@ function Raspberry(name) {
 	this.warnings = [];
 }
 function Upload(begintime,bytes,files,label) {
+	console.log(arguments);
 	this.begin = parseAscDate(begintime);
 	this.bytes={current:0,total:bytes};
 	this.files={current:0,total:files};
@@ -148,7 +149,7 @@ Raspberry.prototype.logAdd = function(line) {
 			this.uploads[0].bytes.current=line[LL.INFO+1];
 		break;
 		case "identification":
-			this.identification = line.slice(LL.INFO,LL.INFO+3);
+			this.identification = line.slice(LL.INFO);
 		break;
 		case "git":this.version = line[LL.INFO];break;
 		}
