@@ -163,15 +163,19 @@ def mail(config, message, subject="Automated Mail", contentType="text/plain"):
     email['From']=Header("{0} <{1}>".format(
             smtpconfig["from"]["name"], smtpconfig["from"]["mail"]))
     email["Subject"]=Header(subject)
-
-    if smtpconfig['usessl']:
-        session = smtplib.SMTP_SSL(smtpconfig['server'], smtpconfig['port'])
-    else: session = smtplib.SMTP(smtpconfig['server'], smtpconfig['port'])
-    session.login(smtpconfig['username'], smtpconfig['password'])
-    session.sendmail(smtpconfig["from"]["mail"],
-                     smtpconfig["to"]["mail"],
-                     email.as_string().encode("utf-8"))
-    session.quit()
+    try:
+        if smtpconfig['usessl']:
+            session = smtplib.SMTP_SSL(smtpconfig['server'], smtpconfig['port'])
+        else: session = smtplib.SMTP(smtpconfig['server'], smtpconfig['port'])
+        session.login(smtpconfig['username'], smtpconfig['password'])
+        session.sendmail(smtpconfig["from"]["mail"],
+                         smtpconfig["to"]["mail"],
+                         email.as_string().encode("utf-8"))
+        session.quit()
+    except smtplib.SMTPException:
+        import traceback,logging
+        log=logging.getLogger(config['devicename'])
+        log.warn("Could not send email|"+traceback.format_exc())
 
 
 class MailStream:

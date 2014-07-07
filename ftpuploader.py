@@ -84,7 +84,8 @@ def uploadDir(config, localroot, label):
             osfname=os.path.join(root,fname)
             if not os.path.isfile(osfname): continue
             uploadedfiles += 1
-            log.debug("uploading " + os.path.join(relroot, fname))
+            relfname = os.path.join(relroot, fname)
+            log.debug("uploading " + relfname)
             try:
                 uploaded = host.upload_if_newer(osfname,
                            fname.encode('utf-8'),
@@ -93,9 +94,9 @@ def uploadDir(config, localroot, label):
                     log.debug("tmp|skipped file "+osfname)
                     uploadedbytes+=os.path.getsize(osfname)
             except (ftputil.error.FTPOSError,OSError) as e:
-                log.warn("Error while uploading "+osfname+"|"+traceback.format_exc())
+                log.warn("Error while uploading "+relfname+"|"+traceback.format_exc())
             except IOError as e:
-                log.warn("Could not read file "+osfname+"|"+traceback.format_exc())
+                log.warn("Could not read file "+relfname+"|"+traceback.format_exc())
 
     endtime = datetime.datetime.now()
     totaltime = str(datetime.timedelta(seconds=int((endtime-begintime).total_seconds())))
