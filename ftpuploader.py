@@ -73,7 +73,7 @@ def uploadDir(config, devicename, localroot, label):
     for root, dirs, files in os.walk(localroot):
         relroot = os.path.relpath(root, localroot)
         #log.debug("walking "+relroot)
-        host.chdir(os.path.join(remoteroot, relroot))
+        host.chdir(os.path.normpath(os.path.join(remoteroot, relroot)))
         if (datetime.datetime.now()-lastlogdate).total_seconds() > 300:
             # log every 5 minutes
             lastlogdate=datetime.datetime.now()

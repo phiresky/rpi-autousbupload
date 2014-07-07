@@ -45,7 +45,7 @@ pre { max-height:300px; }
                     <p>Gestartet: {{upload.begin|date:"medium"}}</p>
                     <p ng-if="upload.complete">{{upload.error?'Abgebrochen':'Fertiggestellt'}}: {{upload.complete|date:"medium"}}</p>
                     <p ng-if="upload.complete">Dauer: {{upload.complete|from:upload.begin:true}}</p>
-                    <p>Hochgeladen: {{upload.files|xofy}} Dateien {{upload.files.skipped?'('+upload.files.skipped+' übersprungen)':''}}</p>
+                    <p>Hochgeladen: {{upload.files|xofy}} Dateien {{upload.files.skipped?'('+upload.files.skipped+' bereits vorhanden)':''}}</p>
                     <p>Label: {{upload.label}}</p>
                 </div>
                 <div class="col-xs-12 col-md-8">
@@ -110,6 +110,7 @@ function Raspberry(name) {
 	this.lastUpdate = 0;
 	this.errors = [];
 	this.warnings = [];
+	this.version="?";
 }
 function Upload(begintime,bytes,files,label) {
 	this.begin = parseAscDate(begintime);
@@ -139,6 +140,12 @@ Raspberry.prototype.logAdd = function(line) {
 	if(line[LL.TYPE]==="INFO") {
 		switch(line[LL.WHAT]) {
 		case "uploadBegin": 
+			if(this.uploads.length>0&&!this.uploads[0].complete) {
+				var lastlog=this.log[this.log.length-2];
+				this.uploads[0].error = lastlog.slice();
+				this.uploads[0].error[LL.WHAT]="Unknown Error";
+				this.uploads[0].complete = lastlog[LL.TIME];
+			}
 			this.uploads.unshift(new Upload(line[LL.TIME],
 				line[LL.INFO+3],
 				line[LL.INFO+2],
