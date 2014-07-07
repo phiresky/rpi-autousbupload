@@ -105,7 +105,7 @@ def uploadDir(config, localroot, label):
     host.chdir(superrootpath)
     host.rename(remoteroot, findDirname(host, rootdirname))
     host.close()
-    if(uploadedfiles<totalcount) log.warn((totalcount-uploadedfiles-skippedfiles)+" files could not be uploaded|");
+    if(uploadedfiles<totalcount): log.warn((totalcount-uploadedfiles-skippedfiles)+" files could not be uploaded|");
     log.info("uploadComplete|{uploadedfiles}|{uploadedbytes}|{totaltime}|{skippedfiles}".format(**vars()))
     util.mail(config,
         config['templates']['uploadComplete']['body'].format(filecount=uploadedfiles,megabytes=round(uploadedbytes/1024/1024,1),duration=totaltime),
