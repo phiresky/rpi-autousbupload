@@ -12,6 +12,7 @@ h3.smallmarg {margin:6px}
 .inline {display:inline-block;}
 .progress-bar>span{white-space:nowrap;color:black;}
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+pre { max-height:300px; }
 </style>
 <body ng-controller="RaspberryController">
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -22,8 +23,9 @@ h3.smallmarg {margin:6px}
 		<accordion-group ng-repeat="rasp in raspberries" is-open="rasp.visible">
 			<accordion-heading><div class=row>
 				<h3 class="col-md-4 smallmarg inline">{{rasp.name}}</h3>
-				<div class="col-md-4" ng-if="!rasp.visible&&rasp.uploads.length>0">
-					<p>Letzter Upload {{rasp.uploads[0].begin|from:moment()}}</p>
+				<div class="col-md-7" ng-if="!rasp.visible&&rasp.uploads.length>0">
+					<p ng-if="rasp.uploads[0].complete">Letzter Upload {{rasp.uploads[0].begin|from:moment()}}</p>
+					<p ng-if="!rasp.uploads[0].complete">Upload läuft seit {{rasp.uploads[0].begin|from:moment():true}}</p>
 					<progressbar 
 						style='margin-bottom:0px;'
 						max="rasp.uploads[0].bytes.total"
@@ -33,7 +35,7 @@ h3.smallmarg {margin:6px}
 						{{rasp.uploads[0].error?'ERROR':(rasp.uploads[0].bytes|xofy:'bytes')}}
 					</progressbar>
 				</div>
-				<div class="col-md-4" ng-if="rasp.uploads.length==0"><p>Bisher keine Uploads</p></div>
+				<div class="col-md-7" ng-if="rasp.uploads.length==0"><p>Bisher keine Uploads</p></div>
 			</div></accordion-heading>
 			<rpi-status></rpi-status>
 			
@@ -43,7 +45,7 @@ h3.smallmarg {margin:6px}
                     <p>Gestartet: {{upload.begin|date:"medium"}}</p>
                     <p ng-if="upload.complete">{{upload.error?'Abgebrochen':'Fertiggestellt'}}: {{upload.complete|date:"medium"}}</p>
                     <p ng-if="upload.complete">Dauer: {{upload.complete|from:upload.begin:true}}</p>
-                    <p>Dateien: {{upload.files|xofy}}</p>
+                    <p>Hochgeladen: {{upload.files|xofy}} Dateien {{upload.files.skipped?'('+upload.files.skipped+' übersprungen)':''}}</p>
                     <p>Label: {{upload.label}}</p>
                 </div>
                 <div class="col-xs-12 col-md-8">
@@ -71,9 +73,9 @@ h3.smallmarg {margin:6px}
     <div ng-hide="logPointer" class="alert alert-info">No raspberries were found</div>
 <script type="text/ng-template" id="rpi-status.html">
 <span>Zuletzt gesehen: {{rasp.lastUpdate|from:moment()}}
-<span ng-if="rasp.identification">| Identification: <code>{{rasp.identification[1]}}</code></span>
+<span ng-if="rasp.identification">| Identifikation: <code>{{rasp.identification[1]}}</code></span>
 | Version: {{rasp.version}}</span>
-| <button ng-click="displayLog=!displayLog" class="btn btn-default btn-sm">View log</button>
+| <button ng-click="displayLog=!displayLog" class="btn btn-default btn-sm">Log anzeigen</button>
 <pre collapse="!displayLog">{{rasp.log.join("\n")}}</pre>
 </script>
 </div>
@@ -110,10 +112,9 @@ function Raspberry(name) {
 	this.warnings = [];
 }
 function Upload(begintime,bytes,files,label) {
-	console.log(arguments);
 	this.begin = parseAscDate(begintime);
 	this.bytes={current:0,total:bytes};
-	this.files={current:0,total:files};
+	this.files={current:0,total:files,skipped:0};
 	this.label=label;
 	this.warnings = [];
 	this.error = null;
@@ -153,6 +154,7 @@ Raspberry.prototype.logAdd = function(line) {
 		case "uploadComplete": 
 			this.uploads[0].complete = parseAscDate(line[LL.TIME]);
 			this.uploads[0].bytes.current=line[LL.INFO+1];
+			this.uploads[0].files.skipped=+line[LL.INFO+3];
 		break;
 		case "identification":
 			this.identification = line.slice(LL.INFO);

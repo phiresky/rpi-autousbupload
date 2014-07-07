@@ -55,6 +55,7 @@ def uploadDir(config, localroot, label):
     host.synchronize_times()
     uploadedfiles = 0
     uploadedbytes = 0
+    skippedfiles = 0
     statuslogcount=config['uploadlogcount']
     statuslogstatus=-1
     lastlogdate=begintime
@@ -93,6 +94,7 @@ def uploadDir(config, localroot, label):
                 if not uploaded:
                     log.debug("tmp|skipped file "+osfname)
                     uploadedbytes+=os.path.getsize(osfname)
+                    skippedfiles += 1
             except (ftputil.error.FTPOSError,OSError) as e:
                 log.warn("Error while uploading "+relfname+"|"+traceback.format_exc())
             except IOError as e:
@@ -103,7 +105,8 @@ def uploadDir(config, localroot, label):
     host.chdir(superrootpath)
     host.rename(remoteroot, findDirname(host, rootdirname))
     host.close()
-    log.info("uploadComplete|{uploadedfiles}|{uploadedbytes}|{totaltime}".format(**vars()))
+    if(uploadedfiles<totalcount) log.warn((totalcount-uploadedfiles-skippedfiles)+" files could not be uploaded|");
+    log.info("uploadComplete|{uploadedfiles}|{uploadedbytes}|{totaltime}|{skippedfiles}".format(**vars()))
     util.mail(config,
         config['templates']['uploadComplete']['body'].format(filecount=uploadedfiles,megabytes=round(uploadedbytes/1024/1024,1),duration=totaltime),
         subject=config['templates']['uploadComplete']['subject'])
