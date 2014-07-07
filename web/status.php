@@ -148,13 +148,13 @@ Raspberry.prototype.logAdd = function(line) {
 		case "uploadProgress": 
 			var progress = line[LL.INFO+1].split("/");
 			var files = line[LL.INFO].split("/");
-			this.uploads[0].bytes = {current:progress[0],total:progress[1]}
-			this.uploads[0].files = {current:files[0],total:files[1]}
+			this.uploads[0].bytes = {current:+progress[0],total:+progress[1]}
+			this.uploads[0].files = {current:+files[0],total:+files[1]}
 		break;
 		case "uploadComplete": 
 			this.uploads[0].complete = parseAscDate(line[LL.TIME]);
-			this.uploads[0].bytes.current=line[LL.INFO+1];
-			this.uploads[0].files.current=line[LL.INFO];
+			this.uploads[0].bytes.current=+line[LL.INFO+1];
+			this.uploads[0].files.current=+line[LL.INFO];
 			this.uploads[0].files.skipped=+line[LL.INFO+3];
 		break;
 		case "identification":
@@ -179,7 +179,7 @@ app.filter('from', function() {
 
 app.filter('bytes', function() {
 	return function(bytes, precision) {
-		if (bytes === 0) return "0 bytes";
+		if (bytes == 0) return "0 bytes";
 		if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
 		if (typeof precision === 'undefined') precision = 1;
 		var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'],
