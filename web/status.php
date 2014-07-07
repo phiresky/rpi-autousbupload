@@ -22,7 +22,7 @@ h3.smallmarg {margin:6px}
 		<accordion-group ng-repeat="rasp in raspberries" is-open="rasp.visible">
 			<accordion-heading><div class=row>
 				<h3 class="col-md-4 smallmarg inline">{{rasp.name}}</h3>
-				<div class="col-md-4" ng-if="!rasp.visible" class="inline">
+				<div class="col-md-4" ng-if="!rasp.visible&&rasp.uploads.length>0">
 					<p>Letzter Upload {{rasp.uploads[0].begin|from:moment()}}</p>
 					<progressbar 
 						style='margin-bottom:0px;'
@@ -32,9 +32,9 @@ h3.smallmarg {margin:6px}
 						value="rasp.uploads[0].error?rasp.uploads[0].bytes.total:rasp.uploads[0].bytes.current">
 						{{rasp.uploads[0].error?'ERROR':(rasp.uploads[0].bytes|xofy:'bytes')}}
 					</progressbar>
-
-				</div></div>
-			</accordion-heading>
+				</div>
+				<div class="col-md-4" ng-if="rasp.uploads.length==0"><p>Bisher keine Uploads</p></div>
+			</div></accordion-heading>
 			<rpi-status></rpi-status>
 			
             <div class="well row marg" ng-repeat="upload in rasp.uploads">
@@ -71,8 +71,10 @@ h3.smallmarg {margin:6px}
     <div ng-hide="logPointer" class="alert alert-info">No raspberries were found</div>
 <script type="text/ng-template" id="rpi-status.html">
 <span>Zuletzt gesehen: {{rasp.lastUpdate|from:moment()}}
-<span ng-if="rasp.identification">| Identification: {{rasp.identification[1]}}</span>
+<span ng-if="rasp.identification">| Identification: <code>{{rasp.identification[1]}}</code></span>
 | Version: {{rasp.version}}</span>
+| <button ng-click="displayLog=!displayLog" class="btn btn-default btn-sm">View log</button>
+<pre collapse="!displayLog">{{rasp.log.join("\n")}}</pre>
 </script>
 </div>
 
@@ -104,6 +106,7 @@ function Raspberry(name) {
 	this.name = name;
 	this.uploads = [];
 	this.lastUpdate = 0;
+	this.errors = [];
 	this.warnings = [];
 }
 function Upload(begintime,bytes,files,label) {
@@ -122,12 +125,15 @@ Raspberry.prototype.getStatus = function() {
 Raspberry.prototype.logAdd = function(line) {
 	this.log.push(line);
 	if(line[LL.TYPE]==="ERROR") {
-		if(this.uploads[0]) this.uploads[0].error = line;
-		this.uploads[0].complete = parseAscDate(line[LL.TIME]);
-		this.error = line;
+		if(this.uploads.length==0) this.errors.push(line);
+		else {
+			this.uploads[0].error = line;
+			this.uploads[0].complete = parseAscDate(line[LL.TIME]);
+		}
 	}
 	if(line[LL.TYPE]==="WARNING") {
-		this.uploads[0].warnings.push(line);
+		if(this.uploads.length==0) this.warnings.push(line);
+		else this.uploads[0].warnings.push(line);
 	}
 	if(line[LL.TYPE]==="INFO") {
 		switch(line[LL.WHAT]) {
