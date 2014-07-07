@@ -8,7 +8,6 @@ try:
     import util,usbwait
     util.ntpTimeWait()
 
-
     config=util.loadConfig("config.json")
     log=util.initLogger(config)
 except KeyboardInterrupt:
