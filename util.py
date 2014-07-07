@@ -8,6 +8,7 @@ import urllib,urllib.request
 import time
 import os,os.path
 import smtplib
+import socket
 from email.mime.text import MIMEText
 from email.header import Header
 def getMountPoint(devid):
@@ -107,13 +108,11 @@ def int2base(num,b,numerals='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
 
 def getMac():
     from uuid import getnode
-    return hex(getnode())
-    #return int2base(getnode(),62)
+    return getnode()
 def getInternalIP():
-    import socket
-    return socket.gethostbyname(socket.gethostname())
+    return socket.inet_aton(socket.gethostbyname(socket.gethostname()))
 def getExternalIP():
-    return urllib.request.urlopen("http://api.ipify.org").read().decode('ascii')
+    return socket.inet_aton(urllib.request.urlopen("http://api.ipify.org").read().decode('ascii'))
 
 def waitForNetwork():
     """ waits for an internet connection """
@@ -129,11 +128,13 @@ lastID="?/?/?"
 def getIdentification():
     """ return a string containing external, internal ips and mac address """
     global lastID,lastIDgetTime
+    import struct,base64
     now=datetime.datetime.now()
     if (now-lastIDgetTime).total_seconds()>60*60:
         # cache for one hour
         lastIDgetTime=now
-        lastID = "|".join((getMac(),getInternalIP(),getExternalIP()))
+        try: lastID = base64.urlsafe_b64encode(struct.pack(">Q",getMac())[2:]+getInternalIP()+getExternalIP()).decode('ascii')
+        except: lastID = "Unknown"
     return lastID
 
 def ntpTimeWait():

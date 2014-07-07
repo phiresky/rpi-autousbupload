@@ -15,7 +15,7 @@ h3.smallmarg {margin:6px}
 </style>
 <body ng-controller="RaspberryController">
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-<div class="container"><h2>Raspberry upload status </h2><p>Last update: {{lastUpdate|from:moment()}}</p></div>
+<div class="container"><h2>Raspberry Upload Status </h2><p>Letztes Update: {{lastUpdate|from:moment()}}</p></div>
 </div>
 <div class="container">
     <accordion>
@@ -23,7 +23,7 @@ h3.smallmarg {margin:6px}
 			<accordion-heading><div class=row>
 				<h3 class="col-md-4 smallmarg inline">{{rasp.name}}</h3>
 				<div class="col-md-4" ng-if="!rasp.visible" class="inline">
-					Latest Upload: {{rasp.uploads[0].begin|from:moment()}}
+					<p>Letzter Upload {{rasp.uploads[0].begin|from:moment()}}</p>
 					<progressbar 
 						style='margin-bottom:0px;'
 						max="rasp.uploads[0].bytes.total"
@@ -40,9 +40,10 @@ h3.smallmarg {margin:6px}
             <div class="well row marg" ng-repeat="upload in rasp.uploads">
                 <div class="col-xs-12 col-md-4">
                     <p>Upload {{rasp.uploads.length-$index}} / {{rasp.uploads.length}}:</p>
-                    <p>Begun: {{upload.begin|date:"medium"}}</p>
-                    <p ng-if="upload.complete">{{upload.error?'Aborted':'Completed'}}: {{upload.complete|date:"medium"}} ({{upload.complete|from:upload.begin}})</p>
-                    <p>Files: {{upload.files|xofy}}</p>
+                    <p>Gestartet: {{upload.begin|date:"medium"}}</p>
+                    <p ng-if="upload.complete">{{upload.error?'Abgebrochen':'Fertiggestellt'}}: {{upload.complete|date:"medium"}}</p>
+                    <p ng-if="upload.complete">Dauer: {{upload.complete|from:upload.begin:true}}</p>
+                    <p>Dateien: {{upload.files|xofy}}</p>
                     <p>Label: {{upload.label}}</p>
                 </div>
                 <div class="col-xs-12 col-md-8">
@@ -54,17 +55,22 @@ h3.smallmarg {margin:6px}
 						{{upload.bytes|xofy:'bytes'}}
 					</progressbar>
                     <div ng-if="!upload.complete&&!upload.error" class="alert alert-info">
-                        Upload in progress
+                        Upload aktiv 
                     </div>
-                    <alert ng-if="upload.complete&&!upload.error" type="'success'">Upload complete!</alert>
-                    <alert ng-if="upload.error" type="'danger'">Upload error: {{upload.error[3]}} <button class="btn btn-sm btn-default" ng-click="showTrace=!showTrace">Show Stacktrace</button><pre collapse="!showTrace">{{upload.error.slice(3).join("\n")}}</pre></alert>
+                    <alert ng-if="upload.complete&&!upload.error" type="'success'">Upload vollständig!</alert>
+					<alert ng-if="upload.warnings.length" type="'warning'">
+						Es sind Warnungen aufgetreten.
+						<button ng-click="showWarns=!showWarns" class="btn btn-default btn-sm">Anzeigen</button>
+						<div collapse="!showWarns"><div ng-repeat="warn in upload.warnings"><span  ng-click="showTrace=!showTrace">{{warn[3]}}<pre collapse="!showTrace">{{warn[4]}}</pre></span></div></div>
+					</alert>
+                    <alert ng-if="upload.error" type="'danger'">Upload-Fehler: {{upload.error[3]}} <button class="btn btn-sm btn-default" ng-click="showTrace=!showTrace">Stacktrace anzeigen</button><pre collapse="!showTrace">{{upload.error.slice(3).join("\n")}}</pre></alert>
                 </div>
             </div>
 		</accordion-group>
     </accordion>
     <div ng-hide="logPointer" class="alert alert-info">No raspberries were found</div>
 <script type="text/ng-template" id="rpi-status.html">
-<span>Last seen: {{rasp.lastUpdate|from:moment()}}
+<span>Zuletzt gesehen: {{rasp.lastUpdate|from:moment()}}
 <span ng-if="rasp.identification">| Identification: {{rasp.identification}}</span>
 | Version: {{rasp.version}}</span>
 </script>
@@ -74,7 +80,10 @@ h3.smallmarg {margin:6px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.7.0/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.14/angular.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/angular-i18n/1.2.15/angular-locale_de-de.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.7.0/lang/de.min.js"></script>
 <script>
+moment.lang("de");
 var app = angular.module("raspberries",['ui.bootstrap']);
 
 var LL = {
@@ -95,6 +104,15 @@ function Raspberry(name) {
 	this.name = name;
 	this.uploads = [];
 	this.lastUpdate = 0;
+	this.warnings = [];
+}
+function Upload(begintime,bytes,files,label) {
+	this.begin = parseAscDate(begintime);
+	this.bytes={current:0,total:bytes};
+	this.files={current:0,total:files};
+	this.label=label;
+	this.warnings = [];
+	this.error = null;
 }
 
 Raspberry.prototype.getStatus = function() {
@@ -107,29 +125,33 @@ Raspberry.prototype.logAdd = function(line) {
 		this.uploads[0].complete = parseAscDate(line[LL.TIME]);
 		this.error = line;
 	}
-	switch(line[LL.WHAT]) {
-	case "uploadBegin": 
-		this.uploads.unshift({
-			begin:parseAscDate(line[LL.TIME]),
-			bytes:{current:0,total:line[LL.INFO+3]},
-			files:{current:0,total:line[LL.INFO+2]},
-			label:line[LL.INFO+1]
-		});
-	break;
-	case "uploadProgress": 
-		var progress = line[LL.INFO+1].split("/");
-		var files = line[LL.INFO].split("/");
-		this.uploads[0].bytes = {current:progress[0],total:progress[1]}
-		this.uploads[0].files = {current:files[0],total:files[1]}
-	break;
-	case "uploadComplete": 
-		this.uploads[0].complete = parseAscDate(line[LL.TIME]);
-		this.uploads[0].bytes.current=line[LL.INFO+1];
-	break;
-	case "identification":
-		this.identification = line.slice(LL.INFO,LL.INFO+3);
-	break;
-	case "git":this.version = line[LL.INFO];break;
+	if(line[LL.TYPE]==="WARNING") {
+		this.uploads[0].warnings.push(line);
+	}
+	if(line[LL.TYPE]==="INFO") {
+		switch(line[LL.WHAT]) {
+		case "uploadBegin": 
+			this.uploads.unshift(new Upload(line[LL.TIME],
+				line[LL.INFO+3],
+				line[LL.INFO+2],
+				line[LL.INFO+1]
+			));
+		break;
+		case "uploadProgress": 
+			var progress = line[LL.INFO+1].split("/");
+			var files = line[LL.INFO].split("/");
+			this.uploads[0].bytes = {current:progress[0],total:progress[1]}
+			this.uploads[0].files = {current:files[0],total:files[1]}
+		break;
+		case "uploadComplete": 
+			this.uploads[0].complete = parseAscDate(line[LL.TIME]);
+			this.uploads[0].bytes.current=line[LL.INFO+1];
+		break;
+		case "identification":
+			this.identification = line.slice(LL.INFO,LL.INFO+3);
+		break;
+		case "git":this.version = line[LL.INFO];break;
+		}
 	}
 	this.lastUpdate = parseAscDate(line[LL.TIME]);
 }
@@ -140,8 +162,8 @@ app.filter('xofy', function($filter) {
 	}
 });
 app.filter('from', function() {
-	return function(date,date2) {
-		return moment(date).from(date2);
+	return function(date,date2,prefix) {
+		return moment(date).from(date2,prefix);
 	}
 });
 
