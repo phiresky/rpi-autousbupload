@@ -3,11 +3,11 @@
 main loop starter for the ftpusbwatch program
 """
 import os,sys,subprocess,time
+os.chdir(os.path.dirname(__file__)) # ensure correct working direcory
 try:
     import util,usbwait
     util.ntpTimeWait()
 
-    os.chdir(os.path.dirname(__file__)) # ensure correct working direcory
 
     config=util.loadConfig("config.json")
     log=util.initLogger(config)
