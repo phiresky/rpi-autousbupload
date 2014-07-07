@@ -20,11 +20,11 @@ pre { max-height:300px; }
 </div>
 <div class="container">
     <accordion>
-		<accordion-group ng-repeat="rasp in raspberries" is-open="rasp.visible">
+		<accordion-group ng-repeat="rasp in raspberries | orderBy:'-lastUpdate'" is-open="rasp.visible">
 			<accordion-heading><div class=row>
 				<h3 class="col-md-4 smallmarg inline">{{rasp.name}}</h3>
 				<div class="col-md-7" ng-if="!rasp.visible&&rasp.uploads.length>0">
-					<p ng-if="rasp.uploads[0].complete">Letzter Upload {{rasp.uploads[0].begin|from:moment()}}</p>
+					<p ng-if="rasp.uploads[0].complete">Letzter Upload {{rasp.uploads[0].complete|from:moment()}} fertiggestellt</p>
 					<p ng-if="!rasp.uploads[0].complete">Upload läuft seit {{rasp.uploads[0].begin|from:moment():true}}</p>
 					<progressbar 
 						style='margin-bottom:0px;'
@@ -154,6 +154,7 @@ Raspberry.prototype.logAdd = function(line) {
 		case "uploadComplete": 
 			this.uploads[0].complete = parseAscDate(line[LL.TIME]);
 			this.uploads[0].bytes.current=line[LL.INFO+1];
+			this.uploads[0].files.current=line[LL.INFO];
 			this.uploads[0].files.skipped=+line[LL.INFO+3];
 		break;
 		case "identification":
@@ -195,9 +196,10 @@ String.prototype.endsWith = function(suffix) {
 };
 
 app.controller('RaspberryController', function($scope, $interval, $http) {
-	$scope.raspberries={};
+	$scope.raspberries=[];
 	$scope.logPointer=0;
 	$scope.lastUpdate=null;
+	$scope.namemap={};
 	function updateGet() {
 		$http.get("getlog.php?begin="+encodeURIComponent($scope.logPointer)).success(function(resp) {
 			var lines = resp.split("\n");
@@ -206,6 +208,7 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 			var outLines=[];
 			var line = [];
 			var multiline = false;
+			var raspcount=0;
 			for(var l=0;l<lines.length;l++) {
 				if(!lines[l].endsWith("|END|")) {
 					if(!multiline) line=[];
@@ -218,8 +221,12 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 				else line = lines[l].split("|");
 				multiline = false;
 				//if(line.length<3) continue;
-				if(!$scope.raspberries[line[LL.NAME]]) $scope.raspberries[line[LL.NAME]] = new Raspberry(line[LL.NAME]);
-				$scope.raspberries[line[LL.NAME]].logAdd(line);
+				if(!$scope.raspberries[$scope.namemap[line[LL.NAME]]]) {
+					console.log("added new raps:"+line[LL.NAME]);
+					$scope.namemap[line[LL.NAME]]=raspcount++;
+					$scope.raspberries[$scope.namemap[line[LL.NAME]]] = new Raspberry(line[LL.NAME]);
+				}
+				$scope.raspberries[$scope.namemap[line[LL.NAME]]].logAdd(line);
 				outLines.push(line);
 			}
 			$scope.lastUpdate=parseAscDate(outLines[outLines.length-1][LL.TIME]);

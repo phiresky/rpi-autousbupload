@@ -48,7 +48,7 @@ class USBWait:
                      "aborting (404 "+campath+")")
             return
         try:
-            ftpuploader.uploadDir(self.config, campath, devlabel)
+            ftpuploader.uploadDir(self.config, devname, campath, devlabel)
         except:
             self.log.exception('Error in ftp uploader|')
 

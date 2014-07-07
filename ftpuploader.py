@@ -19,7 +19,7 @@ def findDirname(host, basename):
     return dirname
 
 
-def uploadDir(config, localroot, label):
+def uploadDir(config, devicename, localroot, label):
     log = logging.getLogger(config['devicename'])
 
     log.info("scanningFiles")
@@ -105,7 +105,11 @@ def uploadDir(config, localroot, label):
     host.chdir(superrootpath)
     host.rename(remoteroot, findDirname(host, rootdirname))
     host.close()
-    if(uploadedfiles<totalcount): log.warn(str(totalcount-uploadedfiles-skippedfiles)+" files could not be uploaded|");
+    if(uploadedfiles<totalcount):
+        log.warn(str(totalcount-uploadedfiles-skippedfiles)+" files could not be uploaded|")
+        if util.getMountPoint(devicename) == None:
+            log.error("Device disappeared before upload completed")
+            # might happen because unplugged or not enough power
     log.info("uploadComplete|{uploadedfiles}|{uploadedbytes}|{totaltime}|{skippedfiles}".format(**vars()))
     util.mail(config,
         config['templates']['uploadComplete']['body'].format(filecount=uploadedfiles,megabytes=round(uploadedbytes/1024/1024,1),duration=totaltime),
