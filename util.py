@@ -157,7 +157,7 @@ def mail(config, message, subject="Automated Mail", contentType="text/plain"):
     """ send an automated email """
     smtpconfig = config['smtp']
     subject = config['templates']['subject'].format(subject=subject,device=config['devicename'])
-    email = MIMEText(message + config['templates']['footer'].format(device=config['devicename'],identification=getIdentification()))
+    email = MIMEText(message + config['templates']['footer'].format(device=config['devicename'],identification=getIdentification()),"plain","utf-8")
     email['To']=Header("{0} <{1}>".format(
             smtpconfig["to"]["name"], smtpconfig["to"]["mail"]))
     email['From']=Header("{0} <{1}>".format(
