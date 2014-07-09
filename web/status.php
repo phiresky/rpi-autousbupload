@@ -127,7 +127,7 @@ Raspberry.prototype.getStatus = function() {
 Raspberry.prototype.logAdd = function(line) {
 	this.log.push(line);
 	if(line[LL.TYPE]==="ERROR") {
-		if(this.uploads.length==0) this.errors.push(line);
+		if(this.uploads.length==0||this.uploads[0].complete) this.errors.push(line);
 		else {
 			this.uploads[0].error = line;
 			this.uploads[0].complete = parseAscDate(line[LL.TIME]);

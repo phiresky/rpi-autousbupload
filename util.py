@@ -86,6 +86,7 @@ def initLogger(config):
 
 def sanitize(string):
     """ replace all non-ascii chars with _ """
+    string=string.replace("ü","ue").replace("ä","ae").replace("ö","oe").replace("ß","ss")
     return ''.join([i if ord(i) < 128 else '_' for i in string])
 
 
