@@ -30,15 +30,16 @@ try:
     log.info("boot|Waiting for network and updating")
     util.waitForNetwork()
     log.info("identification|"+str(util.getMac())+"|"+util.getIdentification())
+    updateError = False
     try:
-        gitlog = subprocess.check_output("git pull",shell=True)
+        gitlog = subprocess.check_output("git pull",shell=True,stderr=subprocess.STDOUT)
         subprocess.call("sync")
+        gitlog = gitlog.decode('utf-8').strip()
+        log.info("git|"+str(util.getVersion())+'|'+gitlog)
     except subprocess.CalledProcessError as e:
         log.warn("Update-Fehler|"+str(e.returncode)+":"+e.output.decode('utf-8'))
         log.exception("Git sync error")
-    gitlog = gitlog.decode('utf-8').strip()
-    log.info("git|"+str(util.getVersion())+'|'+gitlog)
-    if gitlog == "Already up-to-date.":
+    if updateError or gitlog == "Already up-to-date.":
         ignoreAlreadyMounted = len(sys.argv)>1 and sys.argv[1] == "skip"
         usbwait.USBWait(config).main_loop(not ignoreAlreadyMounted)
     else:
