@@ -18,9 +18,9 @@ pre { max-height:300px; }
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 <div class="container"><h2>Raspberry Upload Status </h2><p>Letztes Update: {{lastUpdate|from:moment()}}</p></div>
 </div>
-<div class="container">
+<div class="container" ng-cloak>
     <accordion>
-		<accordion-group ng-repeat="rasp in raspberries | orderBy:'-lastUpdate'" is-open="rasp.visible">
+		<accordion-group ng-repeat="rasp in filteredRaspberries() | orderBy:'-lastUpdate'" is-open="rasp.visible">
 			<accordion-heading><div class=row>
 				<h3 class="col-md-4 smallmarg inline">{{rasp.name}}</h3>
 				<div class="col-md-7" ng-if="!rasp.visible&&rasp.uploads.length>0">
@@ -49,6 +49,7 @@ pre { max-height:300px; }
                     <p>Label: {{upload.label}}</p>
                 </div>
                 <div class="col-xs-12 col-md-8">
+					<!-- TODO: animated progress bar uses lots of cpu.. -->
 					<progressbar ng-if="!upload.error"
 						max="upload.bytes.total"
 						type="success"
@@ -207,6 +208,12 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 	$scope.logPointer=0;
 	$scope.lastUpdate=null;
 	$scope.namemap={};
+	var searchName = location.pathname.split("/").pop();
+	$scope.filteredRaspberries = function() {
+		return $scope.raspberries.filter(function(e) {
+			return e.name.toLowerCase().indexOf(searchName)>=0;	
+		});
+	}
 	function updateGet() {
 		$http.get("getlog.php?begin="+encodeURIComponent($scope.logPointer)).success(function(resp) {
 			var lines = resp.split("\n");
