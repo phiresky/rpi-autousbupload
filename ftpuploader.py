@@ -87,7 +87,7 @@ def uploadDir(config, devicename, localroot, label):
         for dirname in dirs:
             dirname=util.sanitize(dirname)
             print("checkdir:"+hostroot+"->"+dirname)
-            host.mkdir(dirname)
+            host.makedirs(dirname)
         for fname in files:
             localfname=os.path.join(root,fname)
             if not os.path.isfile(localfname): continue
@@ -103,11 +103,31 @@ def uploadDir(config, devicename, localroot, label):
                     uploadedbytes+=os.path.getsize(localfname)
                     skippedfiles += 1
             except (ftputil.error.FTPOSError,OSError,IOError) as e:
+                log.info("tmp|Failed uploading "+localfname+"|"+traceback.format_exc())
                 failed_files.append((localfname,hostfname))
                 #log.warn("Error while uploading "+relfname+"|"+traceback.format_exc())
 
     if len(failed_files)>0: 
-        log.warn("failedFiles|"+[local+"->"+remote for local,remote in failed_files])
+        log.info("failedFiles|"+[local+"->"+remote for local,remote in failed_files].join("\n"))
+
+    again_failed_files = []
+    while True:
+        for local,remote in failed_files:
+            try:
+                host.upload_if_newer(local,remote,callback=chunkCallback)
+            except (ftputil.error.FTPOSError,OSError,IOError) as e:
+                log.info("tmp|Again failed uploading "+localfname+"|"+traceback.format_exc())
+                again_failed_files.append((localfname,hostfname))
+        if len(again_failed_files) == len(failed_files):
+            break
+        else:
+            failed_files = again_failed_files
+            
+
+    if len(again_failed_files)>0: 
+        log.warn("failedFiles|"+[local+"->"+remote for local,remote in failed_files].join("\n"))
+
+
     endtime = datetime.datetime.now()
     totaltime = str(datetime.timedelta(seconds=int((endtime-begintime).total_seconds())))
     host.chdir(superrootpath)
