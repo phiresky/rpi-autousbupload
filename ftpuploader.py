@@ -43,6 +43,7 @@ def uploadDir(config, devicename, localroot, label):
     except ftputil.error.FTPOSError:
         log.exception("Could not connect to FTP Server|"+traceback.format_exc())
         return
+    host._session.set_debuglevel(1)
     superrootpath=ftpconfig['rootpath']
     host.makedirs(superrootpath)
     host.chdir(superrootpath)
@@ -57,8 +58,11 @@ def uploadDir(config, devicename, localroot, label):
     uploadedbytes = 0
     skippedfiles = 0
     statuslogcount=config['uploadlogcount']
+    statusloginterval=config['maxlogdelay']
     statuslogstatus=-1
     lastlogdate=begintime
+    failed_files=[]
+
     def logProgress():
         nonlocal uploadedfiles,totalcount,uploadedbytes,totalbytes
         log.info("uploadProgress|{uploadedfiles}/{totalcount}|{uploadedbytes}/{totalbytes}".format(**vars()))
@@ -73,33 +77,37 @@ def uploadDir(config, devicename, localroot, label):
     for root, dirs, files in os.walk(localroot):
         relroot = os.path.relpath(root, localroot)
         #log.debug("walking "+relroot)
-        host.chdir(os.path.normpath(os.path.join(remoteroot, relroot)))
-        if (datetime.datetime.now()-lastlogdate).total_seconds() > 300:
+        hostroot = os.path.normpath(os.path.join(remoteroot, util.sanitize(relroot)))
+        host.chdir(hostroot)
+        if (datetime.datetime.now()-lastlogdate).total_seconds() > statusloginterval:
             # log every 5 minutes
             lastlogdate=datetime.datetime.now()
             logProgress()
 
         for dirname in dirs:
-            host.makedirs(dirname)
+            dirname=util.sanitize(dirname)
+            print("checkdir:"+hostroot+"->"+dirname)
+            if not host.path.isdir(dirname): host.mkdir(dirname)
         for fname in files:
-            osfname=os.path.join(root,fname)
-            if not os.path.isfile(osfname): continue
+            localfname=os.path.join(root,fname)
+            if not os.path.isfile(localfname): continue
+            hostfname=os.path.join(hostroot,util.sanitize(fname))
             uploadedfiles += 1
-            relfname = os.path.join(relroot, fname)
-            log.debug("uploading " + relfname)
+            log.debug("uploading " + os.path.join(relroot, fname))
             try:
-                uploaded = host.upload_if_newer(osfname,
-                           fname.encode('utf-8'),
+                uploaded = host.upload_if_newer(localfname,
+                           util.sanitize(fname),
                            callback=chunkCallback)
                 if not uploaded:
-                    log.debug("tmp|skipped file "+osfname)
-                    uploadedbytes+=os.path.getsize(osfname)
+                    log.debug("tmp|skipped file "+localfname)
+                    uploadedbytes+=os.path.getsize(localfname)
                     skippedfiles += 1
-            except (ftputil.error.FTPOSError,OSError) as e:
-                log.warn("Error while uploading "+relfname+"|"+traceback.format_exc())
-            except IOError as e:
-                log.warn("Could not read file "+relfname+"|"+traceback.format_exc())
+            except (ftputil.error.FTPOSError,OSError,IOError) as e:
+                failed_files.append((localfname,hostfname))
+                #log.warn("Error while uploading "+relfname+"|"+traceback.format_exc())
 
+    if len(failed_files)>0: 
+        log.warn("failedFiles|"+[local+"->"+remote for local,remote in failed_files])
     endtime = datetime.datetime.now()
     totaltime = str(datetime.timedelta(seconds=int((endtime-begintime).total_seconds())))
     host.chdir(superrootpath)
