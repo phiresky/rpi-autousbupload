@@ -87,7 +87,7 @@ def uploadDir(config, devicename, localroot, label):
         for dirname in dirs:
             dirname=util.sanitize(dirname)
             print("checkdir:"+hostroot+"->"+dirname)
-            if not host.path.isdir(dirname): host.mkdir(dirname)
+            host.mkdir(dirname)
         for fname in files:
             localfname=os.path.join(root,fname)
             if not os.path.isfile(localfname): continue
