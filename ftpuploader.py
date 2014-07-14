@@ -126,13 +126,9 @@ def uploadDir(config, devicename, localroot, label):
                 try:
                     host = connectHost(ftpconfig)
                     host.chdir(hostroot)
-                    uploaded = host.upload_if_newer(localfname,
+                    host.upload(localfname,
                                util.sanitize(fname),
                                callback=chunkCallback)
-                    if not uploaded:
-                        log.debug("tmp|skipped file "+localfname)
-                        uploadedbytes+=os.path.getsize(localfname)
-                        skippedfiles += 1
                 except (socket.error,ftputil.error.FTPOSError,OSError,IOError) as e:
                     log.info("tmp|(2)Failed uploading "+localfname+"|"+traceback.format_exc())
                     failed_files.append((localfname,hostfname))
@@ -145,7 +141,7 @@ def uploadDir(config, devicename, localroot, label):
             host = connectHost(ftpconfig)
             for local,remote in failed_files:
                 try:
-                    host.upload_if_newer(local,remote,callback=chunkCallback)
+                    host.upload(local,remote,callback=chunkCallback)
                 except (socket.error,ftputil.error.FTPOSError,OSError,IOError) as e:
                     log.info("tmp|Again failed uploading "+localfname+"|"+traceback.format_exc())
                     again_failed_files.append((localfname,hostfname))
