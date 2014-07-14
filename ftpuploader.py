@@ -6,6 +6,7 @@ import os
 import util
 import datetime
 import traceback
+import socket
 
 import ftputil
 
@@ -18,6 +19,11 @@ def findDirname(host, basename):
         dirname = basename + "-" + str(curint)
     return dirname
 
+def connectHost(ftpconfig):
+    return ftputil.FTPHost(ftpconfig['server'],
+                           ftpconfig['username'],
+                           ftpconfig['password'])
+
 
 def uploadDir(config, devicename, localroot, label):
     log = logging.getLogger(config['devicename'])
@@ -27,9 +33,10 @@ def uploadDir(config, devicename, localroot, label):
     begintime = datetime.datetime.now()
     log.info("uploadBegin|{localroot}|{label}|{filecount}|{bytecount}".format(
         localroot=localroot,label=label,filecount=totalcount, bytecount=totalbytes))
-    util.mail(config, 
-            config['templates']['uploadBegin']['body'].format(
-                filecount=totalcount, megabytes=round(totalbytes/1024/1024,1)),
+    util.mail(config,
+        config['templates']['uploadBegin']['body'].format(
+            filecount=totalcount,
+            megabytes=round(totalbytes/1024/1024,1)),
             subject=config['templates']['uploadBegin']['subject'])
 
 
@@ -37,9 +44,7 @@ def uploadDir(config, devicename, localroot, label):
     ftpconfig = config['ftp']
     log.debug("Connecting to " + ftpconfig['server'])
     try:
-        host=ftputil.FTPHost(ftpconfig['server'],
-                    ftpconfig['username'],
-                    ftpconfig['password'])
+        host = connectHost(ftpconfig)
     except ftputil.error.FTPOSError:
         log.exception("Could not connect to FTP Server|"+traceback.format_exc())
         return
@@ -78,17 +83,31 @@ def uploadDir(config, devicename, localroot, label):
         relroot = os.path.relpath(root, localroot)
         #log.debug("walking "+relroot)
         hostroot = os.path.normpath(os.path.join(remoteroot, util.sanitize(relroot)))
-        host.chdir(hostroot)
+        try:
+            host.chdir(hostroot)
+        except (socket.error,ftputil.error.FTPOSError,OSError,IOError) as e:
+            log.warn("Connection died|"+traceback.format_exc())
+            host = connectHost(ftpconfig)
+            host.chdir(hostroot)
+
         if (datetime.datetime.now()-lastlogdate).total_seconds() > statusloginterval:
-            # log every 5 minutes
             lastlogdate=datetime.datetime.now()
             logProgress()
 
         for dirname in dirs:
             dirname=util.sanitize(dirname)
-            print("checkdir:"+hostroot+"->"+dirname)
-            host.makedirs(dirname)
+            try:
+                host.makedirs(dirname)
+            except (socket.error,ftputil.error.FTPOSError,OSError,IOError) as e:
+                log.warn("Connection died|"+traceback.format_exc())
+                host = connectHost(ftpconfig)
+                host.chdir(hostroot)
+                host.makedirs(dirname)
+
         for fname in files:
+            if (datetime.datetime.now()-lastlogdate).total_seconds() > statusloginterval:
+                lastlogdate=datetime.datetime.now()
+                logProgress()
             localfname=os.path.join(root,fname)
             if not os.path.isfile(localfname): continue
             hostfname=os.path.join(hostroot,util.sanitize(fname))
@@ -96,32 +115,44 @@ def uploadDir(config, devicename, localroot, label):
             log.debug("uploading " + os.path.join(relroot, fname))
             try:
                 uploaded = host.upload_if_newer(localfname,
-                           util.sanitize(fname),
-                           callback=chunkCallback)
+                    util.sanitize(fname),
+                    callback=chunkCallback)
                 if not uploaded:
                     log.debug("tmp|skipped file "+localfname)
                     uploadedbytes+=os.path.getsize(localfname)
                     skippedfiles += 1
-            except (ftputil.error.FTPOSError,OSError,IOError) as e:
-                log.info("tmp|Failed uploading "+localfname+"|"+traceback.format_exc())
-                failed_files.append((localfname,hostfname))
-                #log.warn("Error while uploading "+relfname+"|"+traceback.format_exc())
-
-    if len(failed_files)>0: 
-        log.info("failedFiles|"+[local+"->"+remote for local,remote in failed_files].join("\n"))
+            except (socket.error,ftputil.error.FTPOSError,OSError,IOError) as e:
+                log.info("tmp|(1)Failed uploading "+localfname+"|"+traceback.format_exc())
+                try:
+                    host = connectHost(ftpconfig)
+                    host.chdir(hostroot)
+                    uploaded = host.upload_if_newer(localfname,
+                               util.sanitize(fname),
+                               callback=chunkCallback)
+                    if not uploaded:
+                        log.debug("tmp|skipped file "+localfname)
+                        uploadedbytes+=os.path.getsize(localfname)
+                        skippedfiles += 1
+                except (socket.error,ftputil.error.FTPOSError,OSError,IOError) as e:
+                    log.info("tmp|(2)Failed uploading "+localfname+"|"+traceback.format_exc())
+                    failed_files.append((localfname,hostfname))
 
     again_failed_files = []
-    while True:
-        for local,remote in failed_files:
-            try:
-                host.upload_if_newer(local,remote,callback=chunkCallback)
-            except (ftputil.error.FTPOSError,OSError,IOError) as e:
-                log.info("tmp|Again failed uploading "+localfname+"|"+traceback.format_exc())
-                again_failed_files.append((localfname,hostfname))
-        if len(again_failed_files) == len(failed_files):
-            break
-        else:
-            failed_files = again_failed_files
+    if len(failed_files)>0: 
+        log.info("failedFiles|"+"\n".join([local+"->"+remote for local,remote in failed_files]))
+        while True:
+            # retry uploading until no more files can be uploaded
+            host = connectHost(ftpconfig)
+            for local,remote in failed_files:
+                try:
+                    host.upload_if_newer(local,remote,callback=chunkCallback)
+                except (socket.error,ftputil.error.FTPOSError,OSError,IOError) as e:
+                    log.info("tmp|Again failed uploading "+localfname+"|"+traceback.format_exc())
+                    again_failed_files.append((localfname,hostfname))
+            if len(again_failed_files) == len(failed_files):
+                break
+            else:
+                failed_files = again_failed_files
             
 
     if len(again_failed_files)>0: 

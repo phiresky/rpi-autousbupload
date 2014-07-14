@@ -71,7 +71,8 @@ pre { max-height:300px; }
             </div>
 		</accordion-group>
     </accordion>
-    <div ng-hide="logPointer" class="alert alert-info">No raspberries were found</div>
+    <div ng-hide="filteredRaspberries().length" class="alert alert-info">No raspberries were found</div>
+	<footer ng-show="raspberries.length!=filteredRaspberries().length"><a href="/">{{raspberries.length-filteredRaspberries().length}} weitere Raspberries anzeigen</a></footer>
 <script type="text/ng-template" id="rpi-status.html">
 <span>Zuletzt gesehen: {{rasp.lastUpdate|from:moment()}}
 <span ng-if="rasp.identification">| Identifikation: <code>{{rasp.identification[1]}}</code></span>
@@ -208,7 +209,7 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 	$scope.logPointer=0;
 	$scope.lastUpdate=null;
 	$scope.namemap={};
-	var searchName = location.pathname.split("/").pop();
+	var searchName = location.pathname.split("/").pop().toLowerCase();
 	$scope.filteredRaspberries = function() {
 		return $scope.raspberries.filter(function(e) {
 			return e.name.toLowerCase().indexOf(searchName)>=0;	
