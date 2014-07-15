@@ -1,7 +1,9 @@
 rpi-autousbupload
 ---
 Automatically uploads data from usb devices to an ftp server.
-Just plug in any USB mass storage device (harddrives, usb-sticks, etc.) and it will automatically upload all files. It will also send an email on start and finish and show progress on a status website: ![screenshot](http://i.imgur.com/UhoWS2V.png)
+Just plug in any USB mass storage device (harddrives, usb-sticks, etc.) and it will automatically upload all files. It will also send an email on start and finish and show progress on a status website: ![screenshot](http://i.imgur.com/xKxw1rE.png)
+
+Originally written for [Lichtathleten](http://lichtathleten.com/) but relatively general purpose.
 
 features
 ---
