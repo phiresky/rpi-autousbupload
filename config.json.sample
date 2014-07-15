@@ -1,35 +1,39 @@
 {
-	"devicename":"rpi-{ownername}",
 	"ownername":"Testpers",
+	"devicename":"{ownername}-Raspberry",
 	"ftp":{
-		"server":"127.0.0.1",
+		"server":"ftp.example.com",
 		"username":"ftpuser",
-		"password":"passwd",
+		"password":"ftppw",
 		"rootpath":"/Upload/{ownername}"
 	},
 	"smtp":{
 		"server":"smtp.gmail.com",
-		"port":465,
-		"username":"user@gmail.com",
-		"password":"foobar",
+		"port":25,
+		"usessl":true,
+		"username":"gmailuser",
+		"password":"password",
 		"from":{
-			"name":"Testpers",
-			"mail":"user@gmail.com"
+			"name":"Raspberry-{ownername}",
+			"mail":"gmailuser@gmail.com"
 		},
 		"to":{
-			"name":"Testpers",
-			"mail":"recv@gmail.com"
+			"name":"{ownername}",
+			"mail":"receiver@gmail.com"
 		}
 	},
 	"devicerootpath":"/",
 	"uploadlogcount":10,
-	"logapiurl":"http://localhost/sendlog.php",
+	"uploadlogcount_comment":"Specifies how often the status should be sent to the server. For example, 5 means send a log every 20%",
+	"maxlogdelay":300,
+	"maxlogdelay_comment":"Send a log regardless of progress every x seconds",
+	"logapiurl":"http://example.com/sendlog.php",
 	"templates":{
 		"subject": "[{{device}}] {{subject}}",
-		"footer":"\n\nDiese automatisierte E-Mail wurde von Gerät {{device}} gesendet. ({{identification}})",
-		"beginUpload":{
+		"footer":"\n\n--\nDiese automatisierte E-Mail wurde von Gerät {{device}} gesendet. ({{identification}})",
+		"uploadBegin":{
 			"subject":"Hochladen hat begonnen.",
-			"body":"Hochladen begonnen. Es werden {{filecount}} Dateien ({{megabytes}}MB) hochgeladen.\nEs wird eine weitere E-Mail gesendet, sobald der Upload fertig ist."
+			"body":"Das automatische Hochladen hat begonnen. Es werden {{filecount}} Dateien ({{megabytes}} MB) hochgeladen.\nDer genaue Status kann auf http://example.com/{{ownername}} nachgesehen werden.\nEs wird eine weitere E-Mail gesendet, sobald der Upload fertig ist."
 		},
 		"uploadComplete":{
 			"subject":"Hochladen abgeschlossen",

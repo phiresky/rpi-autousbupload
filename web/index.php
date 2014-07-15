@@ -75,7 +75,7 @@ pre { max-height:300px; }
 	<footer ng-show="raspberries.length!=filteredRaspberries().length"><a href="/">{{raspberries.length-filteredRaspberries().length}} weitere Raspberries anzeigen</a></footer>
 <script type="text/ng-template" id="rpi-status.html">
 <span>Zuletzt gesehen: {{rasp.lastUpdate|from:moment()}}
-<span ng-if="rasp.identification">| Identifikation: <code>{{rasp.identification[1]}}</code></span>
+<span ng-if="rasp.identification">| Identifikation: <code ng-click="rasp.identification[1]=decodeID(rasp.identification[1]).join(' ')">{{rasp.identification[1]}}</code></span>
 | Version: {{rasp.version}}</span>
 | <button ng-click="displayLog=!displayLog" class="btn btn-default btn-sm">Log anzeigen</button>
 <pre collapse="!displayLog">{{rasp.log.join("\n")}}</pre>
@@ -203,12 +203,19 @@ app.directive("rpiStatus",function() {
 String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
+function decodeID(id) {
+	id=atob(id.replace(/-/g,'+').replace(/_/g,'/'));
+	var mac = id.substr(0,6).split('').map(function(x){return x.charCodeAt().toString(16)}).join(":");
+	function ip(begin) {return id.substr(begin,4).split('').map(function(x){return x.charCodeAt()}).join(".");}
+	return [mac,ip(6),ip(10)];
+}
 
 app.controller('RaspberryController', function($scope, $interval, $http) {
 	$scope.raspberries=[];
 	$scope.logPointer=0;
 	$scope.lastUpdate=null;
 	$scope.namemap={};
+	$scope.decodeID = decodeID;
 	var searchName = location.pathname.split("/").pop().toLowerCase();
 	$scope.filteredRaspberries = function() {
 		return $scope.raspberries.filter(function(e) {
@@ -223,7 +230,7 @@ app.controller('RaspberryController', function($scope, $interval, $http) {
 			var outLines=[];
 			var line = [];
 			var multiline = false;
-			var raspcount=0;
+			var raspcount=$scope.raspberries.length;
 			for(var l=0;l<lines.length;l++) {
 				if(!lines[l].endsWith("|END|")) {
 					if(!multiline) line=[];

@@ -22,28 +22,31 @@ installation
 ---
 only tested on [raspbian darkbasic](http://www.linuxsystems.it/raspbian-wheezy-armhf-raspberry-pi-minimal-image/)
 
-as root:
+as root: ssh root@raspberry-pi
 
 	rm -v /etc/ssh/ssh_host_*
 	dpkg-reconfigure openssh-server
+	dpkg-reconfigure tzdata
+	dpkg-reconfigure locales
 	useradd -m uploaduser
 	passwd uploaduser
+	chsh uploaduser # /bin/bash
+	passwd root
 	apt-get update 
 	apt-get dist-upgrade
-	raspi-config
-	apt-get install curl git rpi-update usbmount python3 python3-pyudev python3-pip
+	apt-get install curl git usbmount python3 python3-pyudev python3-pip
 	pip-3.2 install ftputil
-	sudo curl -L --output /usr/bin/rpi-update https://raw.githubusercontent.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
+	curl -L --output /usr/local/bin/rpi-update https://raw.githubusercontent.com/Hexxeh/rpi-update/master/rpi-update && chmod +x /usr/local/bin/rpi-update
 	rpi-update
+	vi /etc/usbmount/usbmount.conf # add 'ntfs ntfs-3g' to FILESYSTEMS
 	reboot
-	vim /etc/usbmount/usbmount.conf # add 'ntfs ntfs-3g' to FILESYSTEMS
 
-as uploaduser:
+as uploaduser: ssh uploaduser@raspberry-pi
 
 	git clone https://github.com/phiresky/rpi-autousbupload # must be https for auto updating
 	cd rpi-autousbupload
 	cp config.json{.sample,}
-	vim config.json
+	vi config.json
 	crontab -e # add @reboot /home/uploaduser/rpi-autousbupload/main.py
 
 
