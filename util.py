@@ -119,7 +119,7 @@ def waitForNetwork():
     """ waits for an internet connection """
     while True:
         try:
-            urllib.request.urlopen("http://google.com")
+            urllib.request.urlopen("http://google.com").close()
             break
         except urllib.error.URLError:
             time.sleep(10)

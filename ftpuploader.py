@@ -23,6 +23,7 @@ def findDirname(host, basename):
     return dirname
 
 def connectHost(ftpconfig):
+    util.waitForNetwork()
     return ftputil.FTPHost(ftpconfig['server'],
                            ftpconfig['username'],
                            ftpconfig['password'])
