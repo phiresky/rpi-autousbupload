@@ -162,7 +162,7 @@ Raspberry.prototype.logAdd = function(line) {
 		break;
 		case "uploadComplete": 
 			this.uploads[0].complete = parseAscDate(line[LL.TIME]);
-			this.uploads[0].bytes.current=+line[LL.INFO+1];
+			this.uploads[0].bytes.current=Math.min(+line[LL.INFO+1],this.uploads[0].bytes.total);
 			this.uploads[0].files.current=+line[LL.INFO];
 			this.uploads[0].files.skipped=+line[LL.INFO+3];
 		break;

@@ -115,13 +115,15 @@ def getInternalIP():
 def getExternalIP():
     return socket.inet_aton(urllib.request.urlopen("http://api.ipify.org").read().decode('ascii'))
 
-def waitForNetwork():
+def waitForNetwork(timeout=60*5):
     """ waits for an internet connection """
-    while True:
+    totaltime = 0
+    while timeout == None or totaltime < timeout:
         try:
             urllib.request.urlopen("http://google.com").close()
             break
         except urllib.error.URLError:
+            totaltime += 10
             time.sleep(10)
 
 lastIDgetTime=datetime.datetime(1,1,1)

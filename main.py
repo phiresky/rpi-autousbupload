@@ -16,7 +16,7 @@ except Exception as e:
     """ if all else fails, do a git pull, hoping that will fix it """
     import traceback
     traceback.print_exc()
-    util.waitForNetwork()
+    util.waitForNetwork(timeout=None)
     gitlog = subprocess.check_output("git pull -f",shell=True).decode('utf-8').strip()
     subprocess.call("sync")
     print(gitlog)
@@ -28,7 +28,7 @@ except Exception as e:
 
 try:
     log.info("boot|Waiting for network and updating")
-    util.waitForNetwork()
+    util.waitForNetwork(timeout=None)
     log.info("identification|"+str(util.getMac())+"|"+util.getIdentification())
     updateError = False
     try:
