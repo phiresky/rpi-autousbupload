@@ -3,7 +3,7 @@ rpi-autousbupload
 Automatically uploads data from usb devices to an ftp server.
 Just plug in any USB mass storage device (harddrives, usb-sticks, etc.) and it will automatically upload all files. It will also send an email on start and finish and show progress on a status website: ![screenshot](http://i.imgur.com/xKxw1rE.png)
 
-Originally written for [Lichtathleten](http://lichtathleten.com/) but relatively general purpose.
+Originally written for [Lichtathleten](http://lichtathleten.com/) but should work for any general purpose.
 
 features
 ---
@@ -14,16 +14,18 @@ features
 
 seems to need about 11MB of memory
 
-dependencies
----
-* git
-* python3
-* python3-pyudev
-* python ftputil
 
 installation
 ---
 only tested on [raspbian darkbasic](http://www.linuxsystems.it/raspbian-wheezy-armhf-raspberry-pi-minimal-image/)
+
+#### dependencies
+
+* git
+* python3
+* python3-pyudev
+* python3-ftputil
+* usbmount or any other auto-mount system
 
 ###### system setup
 as root: `ssh root@raspberry-pi`
