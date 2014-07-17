@@ -25,7 +25,8 @@ installation
 ---
 only tested on [raspbian darkbasic](http://www.linuxsystems.it/raspbian-wheezy-armhf-raspberry-pi-minimal-image/)
 
-as root: ssh root@raspberry-pi
+###### system setup
+as root: `ssh root@raspberry-pi`
 ```bash
 rm -v /etc/ssh/ssh_host_*
 dpkg-reconfigure openssh-server
@@ -44,7 +45,10 @@ rpi-update
 vi /etc/usbmount/usbmount.conf # add 'ntfs ntfs-3g' to FILESYSTEMS, and "-fstype=vfat,utf8" to FS_MOUNTOPTIONS
 reboot
 ```
-as uploaduser: ssh uploaduser@raspberry-pi
+
+###### actual installation
+
+as uploaduser: `ssh uploaduser@raspberry-pi`
 ```bash
 git clone https://github.com/phiresky/rpi-autousbupload # must be https for auto updating
 cd rpi-autousbupload
