@@ -9,14 +9,15 @@ import time
 import os,os.path
 import smtplib
 import socket
+import codecs
 from email.mime.text import MIMEText
 from email.header import Header
 def getMountPoint(devid):
     """ find out the mount point given a device path """
-    for mount in open('/proc/mounts'):
+    for mount in codecs.open('/proc/mounts'):
         dev, mountpoint, fstype = mount.split()[:3]
-        if dev == devid:
-            return mountpoint
+        if dev.decode('ascii') == devid:
+            return mountpoint.decode('unicode_escape')
     return None
     # if fstype in ('fuseblk','vfat') and dev.startswith('/dev/sd'):
     #    print(mountpoint)

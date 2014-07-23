@@ -60,6 +60,7 @@ crontab -e # add @reboot /home/uploaduser/rpi-autousbupload/main.py
 ```
 And done!
 Reboot again and it should be waiting for devices.
+Logs appear in rpi-autousbupload/log/devicename.log
 
 
 
