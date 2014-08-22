@@ -162,7 +162,7 @@ def uploadDir(config, devicename, localroot, label):
             
 
     if len(again_failed_files)>0: 
-        log.warn("failedFiles|"+[local+"->"+remote for local,remote in failed_files].join("\n"))
+        log.warn("failedFiles|"+"\n".join([local+"->"+remote for local,remote in failed_files]))
 
 
     endtime = datetime.datetime.now()
