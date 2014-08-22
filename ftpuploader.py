@@ -174,7 +174,7 @@ def uploadDir(config, devicename, localroot, label):
     host.rename(remoteroot, findDirname(host, rootdirname))
     host.close()
     if(uploadedfiles<totalcount):
-        log.warn(str(totalcount-uploadedfiles-skippedfiles)+" files could not be uploaded|")
+        log.warn(str(totalcount-uploadedfiles)+" files could not be uploaded|")
         if util.getMountPoint(devicename) == None:
             log.error("Device disappeared before upload completed")
             # might happen because unplugged or not enough power
