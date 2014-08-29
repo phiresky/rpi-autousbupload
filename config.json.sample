@@ -32,12 +32,16 @@
 		"subject": "[{{device}}] {{subject}}",
 		"footer":"\n\n--\nDiese automatisierte E-Mail wurde von Gerät {{device}} gesendet. ({{identification}})",
 		"uploadBegin":{
-			"subject":"Hochladen hat begonnen.",
-			"body":"Das automatische Hochladen hat begonnen. Es werden {{filecount}} Dateien ({{megabytes}} MB) hochgeladen.\nDer genaue Status kann auf http://example.com/{{ownername}} nachgesehen werden.\nEs wird eine weitere E-Mail gesendet, sobald der Upload fertig ist."
+			"subject":"Upload gestartet",
+			"body":"Das automatische Upload hat begonnen. Es werden {{filecount}} Dateien ({{megabytes}} MB) hochgeladen.\nDer Status des Uploads kann auf http://example.com/{ownername} nachgesehen werden.\nEs wird eine weitere E-Mail gesendet, sobald der Upload fertig ist."
 		},
 		"uploadComplete":{
-			"subject":"Hochladen abgeschlossen",
-			"body":"Hochladen abgeschlossen. Es wurden insgesamt {{filecount}} Dateien ({{megabytes}}MB) hochgeladen. Das ganze hat {{duration}} gedauert."
+			"subject":"Upload erfolgreich abgeschlossen",
+			"body":"Upload abgeschlossen. Es wurden insgesamt {{filecount}} Dateien ({{megabytes}} MB) hochgeladen. Dauer des Uploads: {{duration}} Minuten."
+		},
+		"uploadError":{
+			"subject":"Upload abgebrochen",
+			"body":"Upload abgebrochen.\nBitte kontrolliere den Online-Speicher auf bereits hochgeladene Dateien und starte den Upload gegebenenfalls neu.\n\nFehler-Meldung: {{error}}"
 		}
 	}
 }

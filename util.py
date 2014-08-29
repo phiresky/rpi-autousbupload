@@ -198,7 +198,7 @@ class MailStream:
         """ flush buffer, send mail if non-empty """
         self.buffer = self.buffer.strip()
         if len(self.buffer) > 0:
-            mail(self.config, self.buffer, subject="Error occurred")
+            mail(self.config, self.config['templates']['uploadError']['body'].format(error=self.buffer), subject=self.config['templates']['uploadError']['subject'])
         self.buffer = ""
 
 class PHPUploadStream:

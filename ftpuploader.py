@@ -51,7 +51,6 @@ def uploadDir(config, devicename, localroot, label):
     except ftputil.error.FTPError:
         log.exception("Could not connect to FTP Server|"+traceback.format_exc())
         return
-    host._session.set_debuglevel(1)
     superrootpath=ftpconfig['rootpath']
     host.makedirs(superrootpath)
     host.chdir(superrootpath)
@@ -91,6 +90,7 @@ def uploadDir(config, devicename, localroot, label):
         except (socket.error,ftputil.error.FTPError,OSError,IOError) as e:
             log.info("tmp|Connection died(a)|"+traceback.format_exc())
             time.sleep(CONNDIEWAIT)
+            host.close()
             host = connectHost(ftpconfig)
             host.chdir(hostroot)
 
@@ -108,6 +108,7 @@ def uploadDir(config, devicename, localroot, label):
             except (socket.error,ftputil.error.FTPError,OSError,IOError) as e:
                 log.debug("Error(b)|"+traceback.format_exc())
                 time.sleep(CONNDIEWAIT)
+                host.close()
                 host = connectHost(ftpconfig)
                 host.chdir(hostroot)
                 host.makedirs(dirname)
@@ -133,6 +134,7 @@ def uploadDir(config, devicename, localroot, label):
                 log.info("tmp|(1)Failed uploading "+localfname+"|"+str(e))
                 try:
                     time.sleep(CONNDIEWAIT)
+                    host.close()
                     host = connectHost(ftpconfig)
                     host.chdir(hostroot)
                     host.upload(localfname,
@@ -148,6 +150,7 @@ def uploadDir(config, devicename, localroot, label):
         while True:
             # retry uploading until no more files can be uploaded
             time.sleep(CONNDIEWAIT)
+            host.close()
             host = connectHost(ftpconfig)
             for local,remote in failed_files:
                 try:
@@ -162,7 +165,7 @@ def uploadDir(config, devicename, localroot, label):
             
 
     if len(again_failed_files)>0: 
-        log.warn("failedFiles|"+[local+"->"+remote for local,remote in failed_files].join("\n"))
+        log.warn("failedFiles|"+"\n".join([local+"->"+remote for local,remote in failed_files]))
 
 
     endtime = datetime.datetime.now()
@@ -171,7 +174,7 @@ def uploadDir(config, devicename, localroot, label):
     host.rename(remoteroot, findDirname(host, rootdirname))
     host.close()
     if(uploadedfiles<totalcount):
-        log.warn(str(totalcount-uploadedfiles-skippedfiles)+" files could not be uploaded|")
+        log.warn(str(totalcount-uploadedfiles)+" files could not be uploaded|")
         if util.getMountPoint(devicename) == None:
             log.error("Device disappeared before upload completed")
             # might happen because unplugged or not enough power
